@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy — an interactive lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens — light (default) ============ */
+  :root{
+    --bg:#F3F4F7;
+    --surface:#FFFFFF;
+    --surface-2:#EAEBF0;
+    --text:#1B1E2A;
+    --text-dim:#5A5F72;
+    --border:#D8DAE2;
+    --teal:#177E70;
+    --teal-soft:#E4F2EF;
+    --rust:#AE3F27;
+    --rust-soft:#F6E7E2;
+    --gold:#95681A;
+    --gold-soft:#F5EDDC;
+    --code-bg:#1B1E2A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(20,22,30,0.06);
+    --focus: #2E6DE0;
+    --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161F;
+      --surface:#1C1F2B;
+      --surface-2:#242838;
+      --text:#E7E5DE;
+      --text-dim:#9297AC;
+      --border:#323649;
+      --teal:#4FB8A6;
+      --teal-soft:#1D3833;
+      --rust:#D9714F;
+      --rust-soft:#3A2620;
+      --gold:#D6A552;
+      --gold-soft:#3A3220;
+      --code-bg:#10121A;
+      --code-text:#E7E5DE;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+      --focus:#6FA0FF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161F;
+    --surface:#1C1F2B;
+    --surface-2:#242838;
+    --text:#E7E5DE;
+    --text-dim:#9297AC;
+    --border:#323649;
+    --teal:#4FB8A6;
+    --teal-soft:#1D3833;
+    --rust:#D9714F;
+    --rust-soft:#3A2620;
+    --gold:#D6A552;
+    --gold-soft:#3A3220;
+    --code-bg:#10121A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    --focus:#6FA0FF;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-ui);
+    line-height:1.6;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal);}
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  h1,h2,h3,h4{
+    font-family:var(--font-ui);
+    font-weight:600;
+    line-height:1.25;
+    margin:0 0 0.6em 0;
+  }
+  h1{font-size:2.1rem; font-weight:700;}
+  h2{font-size:1.5rem; letter-spacing:-0.01em;}
+  h3{font-size:1.15rem;}
+  p{margin:0 0 1em 0; max-width:70ch;}
+  ul,ol{margin:0 0 1em 0; padding-left:1.3em;}
+  li{margin-bottom:0.4em;}
+
+  code, pre, .mono{ font-family:var(--font-code); }
+  code{
+    background:var(--surface-2);
+    padding:0.15em 0.4em;
+    border-radius:4px;
+    font-size:0.9em;
+  }
+  pre{
+    background:var(--code-bg);
+    color:var(--code-text);
+    padding:1.1em 1.2em;
+    border-radius:8px;
+    overflow-x:auto;
+    font-size:0.87rem;
+    line-height:1.55;
+    margin:0 0 1em 0;
+    border:1px solid var(--border);
+  }
+  pre code{ background:none; padding:0; font-size:1em; color:inherit; }
+
+  .kw{color:#8FB4E8;}
+  .st{color:#C7D9A0;}
+  .cm{color:#7C8199; font-style:italic;}
+  .fn{color:#E4C07A;}
+  .tp{color:#7FCFC0;}
+  .hl{color:#D6A552;}
+
+  /* ============ Layout shell ============ */
+  .shell{
+    display:flex;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .rail{
+    width:230px;
+    flex-shrink:0;
+    padding:2.2rem 1rem 2rem 1.5rem;
+    position:sticky;
+    top:0;
+    align-self:flex-start;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .rail-title{
+    font-size:0.72rem;
+    color:var(--text-dim);
+    text-transform:none;
+    margin:0 0 1rem 0;
+    padding-bottom:0.6rem;
+    border-bottom:1px solid var(--border);
+  }
+  .rail ol{ list-style:none; padding:0; margin:0; }
+  .rail li{ margin:0; }
+  .rail a{
+    display:flex;
+    gap:0.6em;
+    align-items:baseline;
+    text-decoration:none;
+    color:var(--text-dim);
+    font-size:0.86rem;
+    padding:0.42em 0.5em;
+    border-radius:6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .rail a .n{
+    font-family:var(--font-code);
+    font-size:0.78rem;
+    color:var(--text-dim);
+    flex-shrink:0;
+    width:1.4em;
+  }
+  .rail a:hover{ background:var(--surface-2); color:var(--text); }
+  .rail a.active{ color:var(--teal); background:var(--teal-soft); }
+  .rail a.active .n{ color:var(--teal); }
+
+  .topnav{ display:none; }
+
+  main{
+    flex:1;
+    min-width:0;
+    padding:2.4rem 3rem 6rem 3rem;
+  }
+  section{
+    padding-top:1.2rem;
+    margin-bottom:3.2rem;
+    scroll-margin-top:1.5rem;
+  }
+  .eyebrow{
+    color:var(--text-dim);
+    font-size:0.9rem;
+    margin:0 0 0.3em 0;
+  }
+
+  @media (max-width: 980px){
+    .rail{ display:none; }
+    .topnav{
+      display:flex;
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      overflow-x:auto;
+      padding:0.6rem 1rem;
+      gap:0.4rem;
+      -webkit-overflow-scrolling:touch;
+    }
+    .topnav a{
+      flex-shrink:0;
+      font-size:0.8rem;
+      color:var(--text-dim);
+      text-decoration:none;
+      padding:0.35em 0.7em;
+      border-radius:20px;
+      border:1px solid var(--border);
+      white-space:nowrap;
+    }
+    .topnav a.active{ color:var(--teal); border-color:var(--teal); background:var(--teal-soft); }
+    main{ padding:1.6rem 1.2rem 4rem 1.2rem; }
+    h1{ font-size:1.7rem; }
+  }
+
+  /* ============ Header / hero ============ */
+  .hero{
+    padding:2.6rem 0 1rem 0;
+    border-bottom:1px solid var(--border);
+    margin-bottom:2.6rem;
+  }
+  .hero .kicker{
+    color:var(--teal);
+    font-weight:600;
+    font-size:0.95rem;
+    margin-bottom:0.4rem;
+  }
+  .hero h1{ margin-bottom:0.5rem; }
+  .hero .sub{ color:var(--text-dim); font-size:1.05rem; max-width:62ch; }
+
+  .switcher{
+    margin-top:1.8rem;
+    display:flex;
+    gap:1.6rem;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .switcher-buttons{ display:flex; flex-direction:column; gap:0.5rem; }
+  .provider-btn{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:0.6em 1em;
+    font-family:var(--font-ui);
+    font-size:0.92rem;
+    cursor:pointer;
+    text-align:left;
+    box-shadow:var(--shadow);
+  }
+  .provider-btn .dot{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; }
+  .provider-btn.active{ border-color:var(--teal); color:var(--teal); }
+  .provider-btn.active .dot{ background:var(--teal); }
+  .switcher-demo{
+    flex:1;
+    min-width:280px;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.1em 1.3em;
+  }
+  .switcher-demo .line1{ color:#7C8199; font-family:var(--font-code); font-size:0.82rem; margin-bottom:0.5em;}
+  .switcher-demo .line2{ font-family:var(--font-code); font-size:0.95rem; color:var(--code-text); }
+  .switcher-note{ color:var(--text-dim); font-size:0.85rem; margin-top:0.9em; }
+  #swStrategy{ color:#7FCFC0; }
+
+  /* ============ Term definitions ============ */
+  .term{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--teal);
+    border-radius:6px;
+    padding:0.9em 1.1em;
+    margin:0 0 1.1em 0;
+    font-size:0.94rem;
+  }
+  .term .word{ font-weight:600; color:var(--teal); }
+  .term .ex{ color:var(--text-dim); }
+  .term code{ background:var(--surface-2); }
+
+  /* ============ Callouts / cards ============ */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin-bottom:1.3em;
+    box-shadow:var(--shadow);
+  }
+  .card h3{ margin-top:0; }
+  .bad-tag, .good-tag{
+    display:inline-block;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:0.15em 0.6em;
+    border-radius:20px;
+    margin-bottom:0.7em;
+  }
+  .bad-tag{ background:var(--rust-soft); color:var(--rust); }
+  .good-tag{ background:var(--teal-soft); color:var(--teal); }
+  .consequence-list li::marker{ color:var(--rust); }
+  .consequence-list{ background:var(--rust-soft); padding:1em 1.2em 1em 2.1em; border-radius:8px; margin-bottom:1.1em; }
+  .consequence-list li{ color:var(--text); }
+
+  /* ============ Quiz ============ */
+  .quiz{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin:1.6em 0;
+  }
+  .quiz .q-label{ color:var(--gold); font-weight:600; font-size:0.85rem; margin-bottom:0.4em; }
+  .quiz .q-prompt{ font-weight:600; margin-bottom:1em; }
+  .quiz .options{ display:flex; flex-direction:column; gap:0.55em; margin-bottom:0.8em; }
+  .quiz .option{
+    text-align:left;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0.7em 1em;
+    font-family:var(--font-ui);
+    font-size:0.93rem;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .quiz .option:hover:not(:disabled){ border-color:var(--teal); }
+  .quiz .option:disabled{ cursor:default; }
+  .quiz .option.is-correct{ border-color:var(--teal); background:var(--teal-soft); }
+  .quiz .option.is-incorrect{ border-color:var(--rust); background:var(--rust-soft); }
+  .quiz .verdict{ font-weight:600; margin-bottom:0.4em; display:none; }
+  .quiz .verdict.good{ color:var(--teal); display:block; }
+  .quiz .verdict.bad{ color:var(--rust); display:block; }
+  .quiz .explain{ display:none; font-size:0.92rem; color:var(--text-dim); background:var(--surface-2); padding:0.9em 1em; border-radius:8px; }
+
+  /* ============ Details / reveal ============ */
+  details.reveal{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:0.2em 1.4em;
+    margin:1.2em 0;
+  }
+  details.reveal summary{
+    cursor:pointer;
+    padding:0.9em 0;
+    font-weight:600;
+    color:var(--gold);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:0.5em;
+  }
+  details.reveal summary::-webkit-details-marker{ display:none; }
+  details.reveal summary::before{
+    content:"▸";
+    display:inline-block;
+    transition:transform 0.15s;
+    color:var(--gold);
+  }
+  details.reveal[open] summary::before{ transform:rotate(90deg); }
+  details.reveal .reveal-body{ padding:0 0 1.1em 0; border-top:1px solid var(--border); margin-top:0.2em; padding-top:1em; }
+
+  /* ============ Diagram ============ */
+  .diagram-wrap{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.2rem;
+    margin-bottom:1.3em;
+    overflow-x:auto;
+  }
+  .uml-box{ fill:var(--surface-2); stroke:var(--border); stroke-width:1.2; }
+  .uml-box.ctx{ stroke:var(--gold); }
+  .uml-box.iface{ stroke:var(--teal); }
+  .uml-text{ fill:var(--text); font-family:var(--font-code); font-size:12.5px; }
+  .uml-title{ fill:var(--text); font-family:var(--font-ui); font-weight:600; font-size:13.5px; }
+  .uml-stereotype{ fill:var(--text-dim); font-family:var(--font-ui); font-size:11px; font-style:italic; }
+  .uml-line{ stroke:var(--text-dim); stroke-width:1.3; fill:none; }
+  .uml-line.dashed{ stroke-dasharray:5,4; }
+  .uml-arrow{ fill:var(--text-dim); }
+  .uml-diamond{ fill:var(--gold); }
+
+  /* ============ Domain example grid ============ */
+  .domain-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  @media (max-width:760px){ .domain-grid{ grid-template-columns:1fr; } }
+  .domain-card h4{ color:var(--teal); font-size:0.95rem; margin-bottom:0.5em; }
+
+  /* ============ Comparison table ============ */
+  .compare{ width:100%; border-collapse:collapse; margin-bottom:1em; font-size:0.92rem; }
+  .compare th, .compare td{ border:1px solid var(--border); padding:0.7em 0.9em; text-align:left; vertical-align:top; }
+  .compare th{ background:var(--surface-2); font-weight:600; }
+  .rule-line{
+    background:var(--gold-soft);
+    border-left:3px solid var(--gold);
+    padding:0.8em 1.1em;
+    border-radius:6px;
+    font-size:0.93rem;
+  }
+
+  /* ============ Cheat sheet ============ */
+  .cheat{
+    background:var(--surface);
+    border:1px solid var(--teal);
+    border-radius:12px;
+    padding:1.6em 1.8em;
+  }
+  .cheat dt{ color:var(--teal); font-weight:600; font-size:0.85rem; margin-top:0.9em; }
+  .cheat dt:first-child{ margin-top:0; }
+  .cheat dd{ margin:0.2em 0 0 0; }
+
+  .exercise-box{
+    background:var(--gold-soft);
+    border:1px solid var(--gold);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+  }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:2rem 3rem 3rem 3rem;
+    color:var(--text-dim);
+    font-size:0.85rem;
+    border-top:1px solid var(--border);
+  }
+  @media (max-width: 980px){ footer{ padding:2rem 1.2rem 3rem 1.2rem; } }
+
+  .also-note{
+    background:var(--surface-2);
+    border-radius:8px;
+    padding:0.9em 1.1em;
+    font-size:0.9rem;
+    color:var(--text-dim);
+    margin-bottom:1em;
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav" id="topnav" aria-label="Section navigation"></nav>
+
+<div class="shell">
+  <nav class="rail" aria-label="Lesson sections">
+    <div class="rail-title">Strategy pattern</div>
+    <ol id="railList"></ol>
+  </nav>
+
+  <main>
+    <header class="hero" id="s-hero">
+      <div class="kicker">Design pattern · Strategy</div>
+      <h1>Strategy</h1>
+      <p class="sub">You already know SOLID and OOP fundamentals. This lesson builds one pattern from a real production
+      problem, in Python, with checkpoints along the way. Pick a provider below to see the shape of the problem
+      before we name it.</p>
+
+      <div class="switcher">
+        <div class="switcher-buttons" role="group" aria-label="Choose an LLM provider">
+          <button class="provider-btn active" data-provider="openai" data-line="strategy = OpenAIStrategy()" data-desc="OpenAI's API expects a `messages` list and returns a `choices` array.">
+            <span class="dot"></span> OpenAI
+          </button>
+          <button class="provider-btn" data-provider="anthropic" data-line="strategy = AnthropicStrategy()" data-desc="Anthropic's API expects a `system` field and a separate `messages` list, and returns a `content` block list.">
+            <span class="dot"></span> Anthropic
+          </button>
+          <button class="provider-btn" data-provider="local" data-line="strategy = LocalVLLMStrategy()" data-desc="Your self-hosted vLLM server speaks a different wire format again, with no API key at all.">
+            <span class="dot"></span> Local vLLM
+          </button>
+        </div>
+        <div class="switcher-demo">
+          <div class="line1">client.py — the code that sends the request</div>
+          <div class="line2"><span id="swStrategy">strategy = OpenAIStrategy()</span><br>client = LLMClient(strategy)<br>client.ask(<span class="st">"Summarize this outage."</span>)</div>
+          <div class="switcher-note" id="swNote">OpenAI's API expects a <code>messages</code> list and returns a <code>choices</code> array.</div>
+        </div>
+      </div>
+      <p class="switcher-note" style="margin-top:1.1em;">Notice what <strong>doesn't</strong> change when you click a different provider: the last two lines. That's the whole
+      point of this lesson.</p>
+    </header>
+
+    <!-- ================= 1. THE PROBLEM ================= -->
+    <section id="s-problem">
+      <p class="eyebrow">1 · The problem</p>
+      <h2>An LLM gateway that talks to three different APIs</h2>
+      <p>You're building an internal service, <code>llm-gateway</code>, that other teams inside your company call
+      when they need a text completion. Today it only calls OpenAI. Product wants two more things this quarter:
+      fail over to Anthropic's API when OpenAI is down, and run some traffic through a self-hosted vLLM model
+      to cut cost. Each of these three APIs wants a different request shape, a different way of reading the
+      auth key, and a different response format to parse.</p>
+
+      <div class="term">
+        <span class="word">Coupling</span> — how much one piece of code depends on the specific details of another
+        piece of code. <span class="ex">Example: a function that knows OpenAI's exact JSON field names is
+        <em>tightly coupled</em> to OpenAI's API — change that API's shape, and the function breaks.</span>
+      </div>
+
+      <p>Here's the first version your team shipped, back when there was only one provider to worry about.</p>
+    </section>
+
+    <!-- ================= 2. BAD EXAMPLE ================= -->
+    <section id="s-bad">
+      <p class="eyebrow">2 · The naive version</p>
+      <h2>One function, one growing if/elif chain</h2>
+      <div class="card">
+        <span class="bad-tag">Gets the job done, badly</span>
+        <pre><code><span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">generate_completion</span>(provider: <span class="tp">str</span>, prompt: <span class="tp">str</span>, api_key: <span class="tp">str</span>) -> <span class="tp">str</span>:
+    <span class="kw">if</span> provider == <span class="st">"openai"</span>:
+        resp = requests.post(
+            <span class="st">"https://api.openai.com/v1/chat/completions"</span>,
+            headers={<span class="st">"Authorization"</span>: <span class="st">f"Bearer {api_key}"</span>},
+            json={<span class="st">"model"</span>: <span class="st">"gpt-4o"</span>, <span class="st">"messages"</span>: [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}]},
+        )
+        <span class="kw">return</span> resp.json()[<span class="st">"choices"</span>][<span class="hl">0</span>][<span class="st">"message"</span>][<span class="st">"content"</span>]
+
+    <span class="kw">elif</span> provider == <span class="st">"anthropic"</span>:
+        resp = requests.post(
+            <span class="st">"https://api.anthropic.com/v1/messages"</span>,
+            headers={<span class="st">"x-api-key"</span>: api_key, <span class="st">"anthropic-version"</span>: <span class="st">"2023-06-01"</span>},
+            json={<span class="st">"model"</span>: <span class="st">"claude-sonnet"</span>, <span class="st">"max_tokens"</span>: <span class="hl">1024</span>,
+                  <span class="st">"messages"</span>: [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}]},
+        )
+        <span class="kw">return</span> resp.json()[<span class="st">"content"</span>][<span class="hl">0</span>][<span class="st">"text"</span>]
+
+    <span class="kw">elif</span> provider == <span class="st">"local_vllm"</span>:
+        resp = requests.post(
+            <span class="st">"http://gpu-box:8000/generate"</span>,
+            json={<span class="st">"prompt"</span>: prompt, <span class="st">"max_tokens"</span>: <span class="hl">1024</span>},
+        )
+        <span class="kw">return</span> resp.json()[<span class="st">"text"</span>][<span class="hl">0</span>]
+
+    <span class="kw">else</span>:
+        <span class="kw">raise</span> <span class="fn">ValueError</span>(<span class="st">f"Unknown provider: {provider}"</span>)</code></pre>
+
+        <p>This is a <strong>God object</strong> in function form — a single unit that has taken on responsibility
+        for everything, instead of one clear job. Here's exactly what that costs you:</p>
+        <ul class="consequence-list">
+          <li>Add a fourth provider (say, Mistral's API) and you must open <code>generate_completion</code> and edit a function that's already shipped and already tested. Every new provider is a change to old, working code.</li>
+          <li>This one function now has three separate reasons to change: OpenAI changes their JSON shape, Anthropic changes theirs, or vLLM's server changes its route. A change to any provider's API risks breaking the other two branches by accident.</li>
+          <li>You cannot unit-test the Anthropic branch in isolation. Testing it means calling into a 40-line function and hoping your mocks patch the right <code>requests.post</code> call among three.</li>
+          <li>You cannot swap providers per-request without threading a raw string like <code>"openai"</code> through your whole codebase, with no compiler or type checker to catch a typo like <code>"opneai"</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= 3. TRANSFORM STEP BY STEP ================= -->
+    <section id="s-transform">
+      <p class="eyebrow">3 · Building the fix, one step at a time</p>
+      <h2>From if/elif to something you can extend without editing</h2>
+
+      <h3>Step 1 — pull each branch into its own function</h3>
+      <p>Before introducing any new vocabulary, do the smallest useful thing: split the if/elif branches apart.
+      This alone doesn't fix the design, but it makes what's wrong easier to see.</p>
+      <pre><code><span class="kw">def</span> <span class="fn">_call_openai</span>(prompt: <span class="tp">str</span>, api_key: <span class="tp">str</span>) -> <span class="tp">str</span>:
+    <span class="cm"># ... same body as the openai branch above</span>
+    ...
+
+<span class="kw">def</span> <span class="fn">_call_anthropic</span>(prompt: <span class="tp">str</span>, api_key: <span class="tp">str</span>) -> <span class="tp">str</span>:
+    <span class="cm"># ... same body as the anthropic branch above</span>
+    ...
+
+<span class="kw">def</span> <span class="fn">generate_completion</span>(provider: <span class="tp">str</span>, prompt: <span class="tp">str</span>, api_key: <span class="tp">str</span>) -> <span class="tp">str</span>:
+    <span class="kw">if</span> provider == <span class="st">"openai"</span>:
+        <span class="kw">return</span> _call_openai(prompt, api_key)
+    <span class="kw">elif</span> provider == <span class="st">"anthropic"</span>:
+        <span class="kw">return</span> _call_anthropic(prompt, api_key)
+    <span class="cm"># ...</span></code></pre>
+      <p><code>generate_completion</code> is still <strong>coupled</strong> to every provider — it still has to know
+      all three names and dispatch to them by hand. Splitting the functions apart didn't remove that dispatcher;
+      it just tidied it. The real fix is to stop dispatching by string at all.</p>
+
+      <h3>Step 2 — define what every provider must be able to do</h3>
+      <div class="term">
+        <span class="word">Interface</span> — a contract that says which methods a class must provide, without
+        saying how they work. <span class="ex">Example: "anything that claims to be a provider must have a
+        <code>generate(prompt)</code> method that returns a string" — that's the whole contract.</span>
+      </div>
+      <p>In Python, you write an interface with <code>abc.ABC</code> (Abstract Base Class) and
+      <code>@abstractmethod</code>. A class that inherits from it and doesn't implement the abstract method
+      can't be instantiated — Python enforces the contract for you.</p>
+      <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="kw">class</span> <span class="fn">LLMProviderStrategy</span>(ABC):
+    <span class="cm">"""The contract every LLM provider must satisfy."""</span>
+
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">generate</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="cm">"""Send `prompt` to this provider and return the completion text."""</span>
+        ...</code></pre>
+
+      <h3>Step 3 — one class per provider, each implementing that contract</h3>
+      <div class="term">
+        <span class="word">Concrete strategy</span> — a class that implements an interface with one specific
+        algorithm or behavior. <span class="ex">Example: <code>OpenAIStrategy</code> is a concrete strategy —
+        it's one specific way of satisfying <code>LLMProviderStrategy</code>'s contract.</span>
+      </div>
+      <div class="term">
+        <span class="word">Polymorphism</span> — calling the same method name on different objects and getting
+        each object's own behavior, without checking which type you're holding.
+        <span class="ex">Example: <code>strategy.generate(prompt)</code> runs OpenAI's HTTP call if <code>strategy</code>
+        is an <code>OpenAIStrategy</code>, or vLLM's call if it's a <code>LocalVLLMStrategy</code> — same line
+        of calling code either way.</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="fn">OpenAIStrategy</span>(LLMProviderStrategy):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, api_key: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>.api_key = api_key
+
+    <span class="kw">def</span> <span class="fn">generate</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        resp = requests.post(
+            <span class="st">"https://api.openai.com/v1/chat/completions"</span>,
+            headers={<span class="st">"Authorization"</span>: <span class="st">f"Bearer {self.api_key}"</span>},
+            json={<span class="st">"model"</span>: <span class="st">"gpt-4o"</span>, <span class="st">"messages"</span>: [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}]},
+        )
+        <span class="kw">return</span> resp.json()[<span class="st">"choices"</span>][<span class="hl">0</span>][<span class="st">"message"</span>][<span class="st">"content"</span>]
+
+
+<span class="kw">class</span> <span class="fn">AnthropicStrategy</span>(LLMProviderStrategy):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, api_key: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>.api_key = api_key
+
+    <span class="kw">def</span> <span class="fn">generate</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        resp = requests.post(
+            <span class="st">"https://api.anthropic.com/v1/messages"</span>,
+            headers={<span class="st">"x-api-key"</span>: <span class="kw">self</span>.api_key, <span class="st">"anthropic-version"</span>: <span class="st">"2023-06-01"</span>},
+            json={<span class="st">"model"</span>: <span class="st">"claude-sonnet"</span>, <span class="st">"max_tokens"</span>: <span class="hl">1024</span>,
+                  <span class="st">"messages"</span>: [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}]},
+        )
+        <span class="kw">return</span> resp.json()[<span class="st">"content"</span>][<span class="hl">0</span>][<span class="st">"text"</span>]
+
+
+<span class="kw">class</span> <span class="fn">LocalVLLMStrategy</span>(LLMProviderStrategy):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, host: <span class="tp">str</span> = <span class="st">"http://gpu-box:8000"</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>.host = host
+
+    <span class="kw">def</span> <span class="fn">generate</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        resp = requests.post(<span class="st">f"{self.host}/generate"</span>, json={<span class="st">"prompt"</span>: prompt, <span class="st">"max_tokens"</span>: <span class="hl">1024</span>})
+        <span class="kw">return</span> resp.json()[<span class="st">"text"</span>][<span class="hl">0</span>]</code></pre>
+
+      <p>Each class hides its own request shape, its own auth header, its own response parsing. None of them
+      know the other two exist.</p>
+
+      <h3>Step 4 — one class that holds a strategy and delegates to it</h3>
+      <div class="term">
+        <span class="word">Context object</span> — the class that holds a reference to a strategy and calls it,
+        instead of implementing the behavior itself. <span class="ex">Example: <code>LLMClient</code> below is
+        the context — it never contains any provider's HTTP details.</span>
+      </div>
+      <div class="term">
+        <span class="word">Composition over inheritance</span> — building behavior by holding a reference to another
+        object (composition), rather than inheriting from a base class that hard-codes the behavior.
+        <span class="ex">Example: <code>LLMClient</code> doesn't inherit from <code>OpenAIStrategy</code> — it
+        <em>holds one</em> as <code>self._strategy</code> and can swap it for a different object at runtime.</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="fn">LLMClient</span>:
+    <span class="cm">"""Context: sends prompts through whichever provider strategy it's given."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, strategy: LLMProviderStrategy) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._strategy = strategy
+
+    <span class="kw">def</span> <span class="fn">set_strategy</span>(<span class="kw">self</span>, strategy: LLMProviderStrategy) -> <span class="tp">None</span>:
+        <span class="cm">"""Swap providers at runtime — e.g. failing over from OpenAI to Anthropic."""</span>
+        <span class="kw">self</span>._strategy = strategy
+
+    <span class="kw">def</span> <span class="fn">ask</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._strategy.generate(prompt)
+
+
+<span class="cm"># usage</span>
+client = LLMClient(OpenAIStrategy(api_key=<span class="st">"sk-..."</span>))
+client.ask(<span class="st">"Summarize this outage."</span>)
+
+<span class="cm"># fail over — LLMClient's code above never changes</span>
+client.set_strategy(AnthropicStrategy(api_key=<span class="st">"sk-ant-..."</span>))
+client.ask(<span class="st">"Summarize this outage."</span>)</code></pre>
+      <p>Adding a fourth provider now means writing one new class that implements <code>generate</code>. You never
+      touch <code>LLMClient</code>, and you never touch the other providers' classes. That's the whole trade you
+      just made: a longer if/elif chain became a fixed context class plus one small, independent class per
+      provider.</p>
+    </section>
+
+    <!-- Checkpoint 1 -->
+    <section>
+      <div class="quiz" data-correct="c">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Your team adds a fourth provider, Mistral. With the <code>LLMClient</code> design above, what has to change?</div>
+        <div class="options">
+          <button class="option" data-id="a">Edit <code>LLMClient.ask</code> to add a fourth branch for Mistral.</button>
+          <button class="option" data-id="b">Edit <code>LLMProviderStrategy</code> to add a <code>generate_mistral</code> method.</button>
+          <button class="option" data-id="c">Write one new class, <code>MistralStrategy</code>, implementing <code>generate</code>. Nothing else changes.</button>
+          <button class="option" data-id="d">Nothing — Python auto-detects new provider classes by module name.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite. <code>LLMClient.ask</code> only calls <code>self._strategy.generate(prompt)</code> — it has no branches to add. If you find yourself editing it for a new provider, the design has regressed back toward the if/elif version.</div>
+        <div class="explain" data-for="b">Not quite. The interface defines one shared method, <code>generate</code>, that every strategy implements in its own way. Adding a provider-specific method name to the interface would force every existing strategy (OpenAI, Anthropic, vLLM) to also implement a method they don't need.</div>
+        <div class="explain" data-for="c">Correct. That's the entire point of the interface: any class that implements <code>generate(prompt) -> str</code> can be handed to <code>LLMClient</code> unchanged. This is the Open/Closed Principle in action — open for extension (new strategy classes), closed for modification (the context and existing strategies stay untouched).</div>
+        <div class="explain" data-for="d">Not quite — nothing here is automatic. Python doesn't scan for subclasses on its own; you still have to construct a <code>MistralStrategy()</code> and pass it to <code>LLMClient</code> explicitly, same as any other strategy.</div>
+      </div>
+    </section>
+
+    <!-- ================= 4. DIAGRAM ================= -->
+    <section id="s-diagram">
+      <p class="eyebrow">4 · The shape of it</p>
+      <h2>Class relationships for this example</h2>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 340" width="100%" style="max-width:720px; display:block; margin:0 auto;" role="img" aria-label="UML-style diagram: LLMClient holds a LLMProviderStrategy interface, implemented by OpenAIStrategy, AnthropicStrategy and LocalVLLMStrategy">
+          <!-- LLMClient box -->
+          <rect class="uml-box ctx" x="30" y="30" width="190" height="70" rx="6"></rect>
+          <text class="uml-stereotype" x="125" y="50" text-anchor="middle">context</text>
+          <text class="uml-title" x="125" y="70" text-anchor="middle">LLMClient</text>
+          <text class="uml-text" x="125" y="90" text-anchor="middle">- _strategy</text>
+
+          <!-- Interface box -->
+          <rect class="uml-box iface" x="270" y="30" width="230" height="80" rx="6"></rect>
+          <text class="uml-stereotype" x="385" y="50" text-anchor="middle">interface</text>
+          <text class="uml-title" x="385" y="70" text-anchor="middle">LLMProviderStrategy</text>
+          <text class="uml-text" x="385" y="92" text-anchor="middle">+ generate(prompt): str</text>
+
+          <!-- composition line: LLMClient -> Interface, diamond at LLMClient end -->
+          <line class="uml-line" x1="220" y1="65" x2="270" y2="65"></line>
+          <polygon class="uml-diamond" points="220,65 232,58 244,65 232,72"></polygon>
+
+          <!-- Concrete boxes -->
+          <rect class="uml-box" x="30" y="220" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="120" y="245" text-anchor="middle">OpenAIStrategy</text>
+          <text class="uml-text" x="120" y="267" text-anchor="middle">+ generate(prompt)</text>
+
+          <rect class="uml-box" x="280" y="220" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="370" y="245" text-anchor="middle">AnthropicStrategy</text>
+          <text class="uml-text" x="370" y="267" text-anchor="middle">+ generate(prompt)</text>
+
+          <rect class="uml-box" x="510" y="220" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="600" y="245" text-anchor="middle">LocalVLLMStrategy</text>
+          <text class="uml-text" x="600" y="267" text-anchor="middle">+ generate(prompt)</text>
+
+          <!-- realization (dashed) lines from each concrete class up to the interface -->
+          <path class="uml-line dashed" d="M120,220 L120,150 L385,150 L385,110"></path>
+          <polygon class="uml-arrow" points="385,110 379,122 391,122"></polygon>
+
+          <path class="uml-line dashed" d="M370,220 L370,180 L385,180 L385,110"></path>
+          <polygon class="uml-arrow" points="385,110 379,122 391,122"></polygon>
+
+          <path class="uml-line dashed" d="M600,220 L600,150 L385,150 L385,110"></path>
+          <polygon class="uml-arrow" points="385,110 379,122 391,122"></polygon>
+        </svg>
+        <p style="text-align:center; color:var(--text-dim); font-size:0.85rem; margin:0.6em 0 0 0;">
+          Solid line + diamond = <em>composition</em> ("has a"). Dashed line + arrow = <em>realizes the interface</em> ("implements").
+        </p>
+      </div>
+      <p><code>LLMClient</code> holds one <code>LLMProviderStrategy</code> at a time. It never points at
+      <code>OpenAIStrategy</code> directly — that would put it back in the coupled world from Section 2.</p>
+    </section>
+
+    <!-- Checkpoint 2 -->
+    <section>
+      <div class="quiz" data-correct="b">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">In the diagram above, why does <code>LLMClient</code> point at <code>LLMProviderStrategy</code> (the interface) instead of pointing directly at <code>OpenAIStrategy</code>?</div>
+        <div class="options">
+          <button class="option" data-id="a">Because Python requires an abstract base class between any two related classes.</button>
+          <button class="option" data-id="b">So <code>LLMClient</code> can hold any concrete strategy interchangeably, without knowing which one it has.</button>
+          <button class="option" data-id="c">Because interfaces run faster than concrete classes in Python.</button>
+          <button class="option" data-id="d">It's only there for documentation — the code would behave identically without it.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite — that's not a Python requirement. You could have <code>LLMClient</code> hold an <code>OpenAIStrategy</code> directly; the interface is a design choice, not a language rule.</div>
+        <div class="explain" data-for="b">Correct. Pointing at the interface, not a concrete class, is what makes the strategies interchangeable. <code>LLMClient</code> only needs to know that whatever it's holding has a <code>generate</code> method — it doesn't need an if/elif to check which one.</div>
+        <div class="explain" data-for="c">Not quite — there's no performance difference here. The interface is an organizing contract at the type level, not an optimization.</div>
+        <div class="explain" data-for="d">Not quite. It's not just documentation — the abstract base class actually enforces the contract at runtime: a class that inherits from <code>LLMProviderStrategy</code> without implementing <code>generate</code> can't even be instantiated.</div>
+      </div>
+    </section>
+
+    <!-- ================= 5. PREDICT THE OUTPUT ================= -->
+    <section id="s-predict">
+      <p class="eyebrow">5 · Predict the output</p>
+      <h2>What does this print?</h2>
+      <p>Assume each strategy's <code>generate</code> is mocked out for this exercise to just tag its provider name,
+      so you can trace the call without a real network request:</p>
+      <pre><code><span class="kw">class</span> <span class="fn">OpenAIStrategy</span>(LLMProviderStrategy):
+    <span class="kw">def</span> <span class="fn">generate</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> <span class="st">f"[openai] {prompt}"</span>
+
+<span class="kw">class</span> <span class="fn">AnthropicStrategy</span>(LLMProviderStrategy):
+    <span class="kw">def</span> <span class="fn">generate</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> <span class="st">f"[anthropic] {prompt}"</span>
+
+client = LLMClient(AnthropicStrategy())
+<span class="fn">print</span>(client.ask(<span class="st">"status check"</span>))
+
+client.set_strategy(OpenAIStrategy())
+<span class="fn">print</span>(client.ask(<span class="st">"status check"</span>))</code></pre>
+      <p>Write down what the two <code>print</code> calls output before opening the answer.</p>
+      <details class="reveal">
+        <summary>Reveal answer</summary>
+        <div class="reveal-body">
+          <pre><code>[anthropic] status check
+[openai] status check</code></pre>
+          <p>The first <code>ask</code> call runs through whatever <code>self._strategy</code> is at that moment
+          — an <code>AnthropicStrategy</code> instance, set in the constructor. <code>set_strategy</code> then
+          replaces <code>self._strategy</code> with a new <code>OpenAIStrategy</code> instance, so the second
+          <code>ask</code> call runs polymorphically through that one instead. <code>LLMClient.ask</code> itself
+          never changed between the two calls — only which object it was holding changed.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 6. OTHER DOMAINS ================= -->
+    <section id="s-domains">
+      <p class="eyebrow">6 · Same shape, different domain</p>
+      <h2>This isn't an LLM-specific trick</h2>
+      <p>Strategy shows up anywhere you have one job with several interchangeable ways of doing it. Two more,
+      from unrelated domains:</p>
+      <div class="domain-grid">
+        <div class="card domain-card">
+          <h4>Payments — checkout</h4>
+          <p>A checkout flow needs to charge a customer by credit card, PayPal, or a stored wallet balance —
+          and the set of payment methods will keep growing.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">PaymentStrategy</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">pay</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>) -> <span class="tp">bool</span>: ...
+
+<span class="kw">class</span> <span class="fn">CreditCardStrategy</span>(PaymentStrategy):
+    <span class="kw">def</span> <span class="fn">pay</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>) -> <span class="tp">bool</span>:
+        <span class="cm"># charge via card network</span>
+        ...
+
+<span class="kw">class</span> <span class="fn">Checkout</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, method: PaymentStrategy) -> <span class="tp">None</span>:
+        <span class="kw">self</span>.method = method
+
+    <span class="kw">def</span> <span class="fn">complete</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>) -> <span class="tp">bool</span>:
+        <span class="kw">return</span> <span class="kw">self</span>.method.pay(amount_cents)</code></pre>
+          <p><code>Checkout</code> is the context, exactly like <code>LLMClient</code> was. It never checks
+          <code>isinstance(method, CreditCardStrategy)</code>.</p>
+        </div>
+        <div class="card domain-card">
+          <h4>Data pipelines — compression</h4>
+          <p>A data pipeline writes large batch files to storage, and needs to pick a compression algorithm
+          per job: fast-but-larger for hot data, slow-but-smaller for cold archives.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">CompressionStrategy</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">compress</span>(<span class="kw">self</span>, data: <span class="tp">bytes</span>) -> <span class="tp">bytes</span>: ...
+
+<span class="kw">class</span> <span class="fn">GzipStrategy</span>(CompressionStrategy):
+    <span class="kw">def</span> <span class="fn">compress</span>(<span class="kw">self</span>, data: <span class="tp">bytes</span>) -> <span class="tp">bytes</span>:
+        <span class="kw">import</span> gzip
+        <span class="kw">return</span> gzip.compress(data)
+
+<span class="kw">class</span> <span class="fn">BatchWriter</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, compressor: CompressionStrategy) -> <span class="tp">None</span>:
+        <span class="kw">self</span>.compressor = compressor
+
+    <span class="kw">def</span> <span class="fn">write</span>(<span class="kw">self</span>, data: <span class="tp">bytes</span>, path: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        compressed = <span class="kw">self</span>.compressor.compress(data)
+        <span class="cm"># ... write `compressed` to `path`</span></code></pre>
+          <p><code>BatchWriter</code> doesn't know or care whether it's holding gzip, zstd, or a
+          not-yet-written <code>Lz4Strategy</code>.</p>
+        </div>
+      </div>
+
+      <div class="also-note">
+        Three domains, one shape: a context (<code>LLMClient</code>, <code>Checkout</code>, <code>BatchWriter</code>)
+        holds an interchangeable object behind a shared interface, and delegates the actual work to it.
+      </div>
+
+      <h3>You've probably already used this without naming it</h3>
+      <p>Python's built-in <code>sorted()</code> takes a <code>key</code> argument — a function that decides
+      how to compare elements:</p>
+      <pre><code>sorted(users, key=<span class="kw">lambda</span> u: u.signup_date)
+sorted(users, key=<span class="kw">lambda</span> u: u.last_name)</code></pre>
+      <p>The function you pass as <code>key</code> <em>is</em> a strategy — it's the interchangeable "how do we
+      compare two things" behavior, and <code>sorted()</code> is the context that calls it without caring which
+      comparison function it was handed. Python just lets you pass a bare function instead of writing a whole
+      class, because functions are objects too — but the shape underneath is the same pattern.</p>
+    </section>
+
+    <!-- Checkpoint 3 -->
+    <section>
+      <div class="quiz" data-correct="a">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Is <code>sorted(users, key=lambda u: u.last_name)</code> an example of the Strategy pattern?</div>
+        <div class="options">
+          <button class="option" data-id="a">Yes — the <code>key</code> function is an interchangeable comparison behavior, and <code>sorted()</code> is the context that delegates to it.</button>
+          <button class="option" data-id="b">No — Strategy requires an <code>abc.ABC</code> base class, and lambdas aren't classes.</button>
+          <button class="option" data-id="c">No — <code>sorted()</code> is a built-in function, and Strategy only applies to user-defined classes.</button>
+          <button class="option" data-id="d">Yes, but only if you rewrite the lambda as a class implementing a <code>compare()</code> method first.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Correct. What makes something Strategy is the shape — an interchangeable piece of behavior, chosen by the caller, plugged into a context that stays the same either way. Python lets that behavior be a plain function instead of a class instance; the pattern doesn't require any particular syntax, just that shape.</div>
+        <div class="explain" data-for="b">Not quite. <code>abc.ABC</code> is one way to write an interface in Python, useful when you want the language to enforce the contract. It's not a requirement of the pattern itself — plenty of languages, and plenty of idiomatic Python, express Strategy with plain callables instead.</div>
+        <div class="explain" data-for="c">Not quite. The pattern is about the relationship between a context and interchangeable behavior, not about whether the context was written by you or by the standard library. <code>sorted()</code> plays the context role here regardless of who wrote it.</div>
+        <div class="explain" data-for="d">Not quite — no rewrite is needed. Wrapping the lambda in a class would just be a more verbose way of expressing the exact same relationship that already exists.</div>
+      </div>
+    </section>
+
+    <!-- ================= 7. SPOT THE BUG ================= -->
+    <section id="s-bug">
+      <p class="eyebrow">7 · Spot the smell</p>
+      <h2>This code uses Strategy-shaped classes — but something's wrong</h2>
+      <pre><code><span class="kw">class</span> <span class="fn">LLMClient</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, strategy: LLMProviderStrategy) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._strategy = strategy
+
+    <span class="kw">def</span> <span class="fn">ask</span>(<span class="kw">self</span>, prompt: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">if</span> <span class="fn">isinstance</span>(<span class="kw">self</span>._strategy, OpenAIStrategy):
+            <span class="kw">return</span> <span class="kw">self</span>._strategy.generate(prompt, model=<span class="st">"gpt-4o-mini"</span>)
+        <span class="kw">elif</span> <span class="fn">isinstance</span>(<span class="kw">self</span>._strategy, AnthropicStrategy):
+            <span class="kw">return</span> <span class="kw">self</span>._strategy.generate(prompt, thinking=<span class="kw">False</span>)
+        <span class="kw">return</span> <span class="kw">self</span>._strategy.generate(prompt)</code></pre>
+      <p>Every class involved still exists — <code>LLMProviderStrategy</code>, <code>OpenAIStrategy</code>,
+      <code>AnthropicStrategy</code>. Something has still gone wrong. What is it, and what would you have to do
+      to add a fourth provider here?</p>
+      <details class="reveal">
+        <summary>Reveal explanation</summary>
+        <div class="reveal-body">
+          <p>The bug: <code>LLMClient.ask</code> branches on <code>isinstance()</code> to decide <em>how</em> to
+          call <code>generate</code>. That's the if/elif chain from Section 2, just moved one level down and
+          disguised behind interface-shaped classes. <code>LLMClient</code> now knows about
+          <code>OpenAIStrategy</code> and <code>AnthropicStrategy</code> by name again — the exact coupling the
+          pattern exists to remove.</p>
+          <p>Adding a fourth provider still means editing <code>LLMClient.ask</code> to add another
+          <code>elif</code>. Nothing was actually gained over the original bad version; the classes are
+          decoration on top of the same problem. The fix is to give every strategy's <code>generate</code> the
+          exact same signature, and let each class swallow its own provider-specific options internally (for
+          example, in <code>__init__</code>) instead of leaking them into the context's call site.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 8. WHEN NOT TO USE ================= -->
+    <section id="s-tradeoffs">
+      <p class="eyebrow">8 · Trade-offs</p>
+      <h2>When not to reach for Strategy</h2>
+      <p>Strategy costs you something: an interface, at least one concrete class, and a context that delegates
+      instead of doing the work directly — more files and more indirection than a single function. That cost is
+      worth it when you have, or clearly expect, more than one interchangeable behavior. It's not worth it when
+      you don't.</p>
+      <div class="card">
+        <span class="bad-tag">Over-engineered</span>
+        <pre><code><span class="kw">class</span> <span class="fn">TaxStrategy</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">calculate</span>(<span class="kw">self</span>, subtotal: <span class="tp">float</span>) -> <span class="tp">float</span>: ...
+
+<span class="kw">class</span> <span class="fn">IrishVatStrategy</span>(TaxStrategy):
+    <span class="kw">def</span> <span class="fn">calculate</span>(<span class="kw">self</span>, subtotal: <span class="tp">float</span>) -> <span class="tp">float</span>:
+        <span class="kw">return</span> subtotal * <span class="hl">0.23</span>
+
+<span class="kw">class</span> <span class="fn">Invoice</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, tax_strategy: TaxStrategy = IrishVatStrategy()) -> <span class="tp">None</span>:
+        <span class="kw">self</span>.tax_strategy = tax_strategy</code></pre>
+        <p>If this business only ever operates under one fixed VAT rate, with no product plan to support other
+        tax rules, this is three extra moving parts for a calculation that will only ever be called one way.
+        A plain method, <code>def calculate_tax(subtotal): return subtotal * 0.23</code>, says the same thing
+        with nothing to navigate through. Reach for Strategy when a second implementation is real or clearly
+        coming — not "might theoretically happen someday."</p>
+      </div>
+
+      <h3>Strategy vs. State — easy to mix up</h3>
+      <p>Both patterns hold a swappable object behind a shared interface. The difference is <em>who decides</em>
+      when the object changes, and whether the swappable objects know about each other.</p>
+      <table class="compare">
+        <tr><th></th><th>Strategy</th><th>State</th></tr>
+        <tr><td>Who picks the object</td><td>The client, from outside (<code>LLMClient(OpenAIStrategy())</code>)</td><td>The object itself, from inside, in reaction to what happened</td></tr>
+        <tr><td>Do the objects know each other</td><td>No — <code>OpenAIStrategy</code> has no idea <code>AnthropicStrategy</code> exists</td><td>Often yes — a <code>PendingState</code> may explicitly transition itself to <code>ShippedState</code></td></tr>
+        <tr><td>What it models</td><td>Interchangeable ways to do the same job</td><td>An object's behavior changing as it moves through a lifecycle</td></tr>
+      </table>
+      <div class="rule-line">One-line rule: if <em>you</em> choose the variant when you construct or configure the object, it's Strategy.
+      If the object changes <em>its own</em> behavior over time as it transitions between states, it's State.</div>
+    </section>
+
+    <!-- ================= 9. PRACTICE ================= -->
+    <section id="s-practice">
+      <p class="eyebrow">9 · Cheat sheet &amp; practice</p>
+      <h2>Cheat sheet</h2>
+      <div class="cheat">
+        <dl>
+          <dt>Problem it solves</dt>
+          <dd>Swapping between interchangeable algorithms or behaviors, without touching the code that uses them.</dd>
+          <dt>Core idea, in one sentence</dt>
+          <dd>Put each variant behind its own class implementing a shared interface, and hand the context object whichever one it should use.</dd>
+          <dt>Trade-off</dt>
+          <dd>More classes and one extra layer of indirection, for a problem that might only ever have one real implementation.</dd>
+          <dt>The smell that tells you to reach for it</dt>
+          <dd>A function with an if/elif or switch statement selecting between algorithm variants, that gets a new branch every time a variant is added.</dd>
+        </dl>
+      </div>
+
+      <h2 style="margin-top:2rem;">Your turn</h2>
+      <div class="exercise-box">
+        <p><strong>Scenario:</strong> you're building <code>NotificationSender</code> for a product that alerts
+        users through Email today. Product wants SMS and push notifications next quarter, and a Slack webhook
+        integration is already on the roadmap after that. Each channel needs different configuration (an SMTP
+        server for email, a phone-number-based API for SMS, a device token for push) and formats its message
+        text differently.</p>
+        <p><strong>Task:</strong> apply Strategy to this. Name the interface and the method it requires. Name at
+        least two concrete strategy classes and what each one's constructor would need to hold. Describe what
+        the context class (<code>NotificationSender</code> or similar) is responsible for, and what it is
+        explicitly <em>not</em> responsible for. You don't need to write the implementation — just describe it
+        clearly enough that you could code it from your own description.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  Strategy pattern lesson · built for system design / SWE interview prep.
+</footer>
+
+<script>
+(function(){
+  // ---------- Section registry for nav ----------
+  var sections = [
+    {id:'s-hero', label:'Start'},
+    {id:'s-problem', label:'The problem'},
+    {id:'s-bad', label:'Naive version'},
+    {id:'s-transform', label:'Building the fix'},
+    {id:'s-diagram', label:'Class diagram'},
+    {id:'s-predict', label:'Predict output'},
+    {id:'s-domains', label:'Other domains'},
+    {id:'s-bug', label:'Spot the smell'},
+    {id:'s-tradeoffs', label:'Trade-offs'},
+    {id:'s-practice', label:'Cheat sheet'}
+  ];
+
+  var railList = document.getElementById('railList');
+  var topnav = document.getElementById('topnav');
+
+  sections.forEach(function(s, i){
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.dataset.target = s.id;
+    var n = document.createElement('span');
+    n.className = 'n';
+    n.textContent = String(i + 1).padStart(2, '0');
+    a.appendChild(n);
+    a.appendChild(document.createTextNode(s.label));
+    li.appendChild(a);
+    railList.appendChild(li);
+
+    var ta = document.createElement('a');
+    ta.href = '#' + s.id;
+    ta.dataset.target = s.id;
+    ta.textContent = s.label;
+    topnav.appendChild(ta);
+  });
+
+  var allNavLinks = document.querySelectorAll('.rail a, .topnav a');
+
+  function setActive(id){
+    allNavLinks.forEach(function(a){
+      if (a.dataset.target === id) a.classList.add('active');
+      else a.classList.remove('active');
+    });
+  }
+
+  if ('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      var visible = entries.filter(function(e){ return e.isIntersecting; });
+      if (visible.length > 0){
+        visible.sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+        setActive(visible[0].target.id);
+      }
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(function(s){
+      var el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  }
+
+  // ---------- Hero provider switcher ----------
+  var swStrategy = document.getElementById('swStrategy');
+  var swNote = document.getElementById('swNote');
+  document.querySelectorAll('.provider-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.provider-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      swStrategy.textContent = btn.dataset.line;
+      swNote.innerHTML = btn.dataset.desc.replace(/`([^`]+)`/g, '<code>$1</code>');
+    });
+  });
+
+  // ---------- Quiz logic ----------
+  document.querySelectorAll('.quiz').forEach(function(quiz){
+    var correctId = quiz.dataset.correct;
+    var verdictEl = quiz.querySelector('.verdict');
+
+    quiz.querySelectorAll('.option').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (quiz.dataset.answered === 'true') return;
+        quiz.dataset.answered = 'true';
+
+        quiz.querySelectorAll('.option').forEach(function(b){
+          b.disabled = true;
+          if (b.dataset.id === correctId) b.classList.add('is-correct');
+        });
+        if (btn.dataset.id !== correctId) btn.classList.add('is-incorrect');
+
+        quiz.querySelectorAll('.explain').forEach(function(e){ e.style.display = 'none'; });
+        var explanation = quiz.querySelector('.explain[data-for="' + btn.dataset.id + '"]');
+        if (explanation) explanation.style.display = 'block';
+
+        verdictEl.textContent = (btn.dataset.id === correctId) ? 'Correct.' : 'Not quite.';
+        verdictEl.className = 'verdict ' + ((btn.dataset.id === correctId) ? 'good' : 'bad');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
