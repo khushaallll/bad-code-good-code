@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory Method — an interactive lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens — light (default) ============ */
+  :root{
+    --bg:#F3F4F7;
+    --surface:#FFFFFF;
+    --surface-2:#EAEBF0;
+    --text:#1B1E2A;
+    --text-dim:#5A5F72;
+    --border:#D8DAE2;
+    --teal:#177E70;
+    --teal-soft:#E4F2EF;
+    --rust:#AE3F27;
+    --rust-soft:#F6E7E2;
+    --gold:#95681A;
+    --gold-soft:#F5EDDC;
+    --code-bg:#1B1E2A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(20,22,30,0.06);
+    --focus: #2E6DE0;
+    --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161F;
+      --surface:#1C1F2B;
+      --surface-2:#242838;
+      --text:#E7E5DE;
+      --text-dim:#9297AC;
+      --border:#323649;
+      --teal:#4FB8A6;
+      --teal-soft:#1D3833;
+      --rust:#D9714F;
+      --rust-soft:#3A2620;
+      --gold:#D6A552;
+      --gold-soft:#3A3220;
+      --code-bg:#10121A;
+      --code-text:#E7E5DE;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+      --focus:#6FA0FF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161F;
+    --surface:#1C1F2B;
+    --surface-2:#242838;
+    --text:#E7E5DE;
+    --text-dim:#9297AC;
+    --border:#323649;
+    --teal:#4FB8A6;
+    --teal-soft:#1D3833;
+    --rust:#D9714F;
+    --rust-soft:#3A2620;
+    --gold:#D6A552;
+    --gold-soft:#3A3220;
+    --code-bg:#10121A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    --focus:#6FA0FF;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-ui);
+    line-height:1.6;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal);}
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  h1,h2,h3,h4{
+    font-family:var(--font-ui);
+    font-weight:600;
+    line-height:1.25;
+    margin:0 0 0.6em 0;
+  }
+  h1{font-size:2.1rem; font-weight:700;}
+  h2{font-size:1.5rem; letter-spacing:-0.01em;}
+  h3{font-size:1.15rem;}
+  p{margin:0 0 1em 0; max-width:70ch;}
+  ul,ol{margin:0 0 1em 0; padding-left:1.3em;}
+  li{margin-bottom:0.4em;}
+
+  code, pre, .mono{ font-family:var(--font-code); }
+  code{
+    background:var(--surface-2);
+    padding:0.15em 0.4em;
+    border-radius:4px;
+    font-size:0.9em;
+  }
+  pre{
+    background:var(--code-bg);
+    color:var(--code-text);
+    padding:1.1em 1.2em;
+    border-radius:8px;
+    overflow-x:auto;
+    font-size:0.87rem;
+    line-height:1.55;
+    margin:0 0 1em 0;
+    border:1px solid var(--border);
+  }
+  pre code{ background:none; padding:0; font-size:1em; color:inherit; }
+
+  .kw{color:#8FB4E8;}
+  .st{color:#C7D9A0;}
+  .cm{color:#7C8199; font-style:italic;}
+  .fn{color:#E4C07A;}
+  .tp{color:#7FCFC0;}
+  .hl{color:#D6A552;}
+
+  /* ============ Layout shell ============ */
+  .shell{
+    display:flex;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .rail{
+    width:230px;
+    flex-shrink:0;
+    padding:2.2rem 1rem 2rem 1.5rem;
+    position:sticky;
+    top:0;
+    align-self:flex-start;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .rail-title{
+    font-size:0.72rem;
+    color:var(--text-dim);
+    margin:0 0 1rem 0;
+    padding-bottom:0.6rem;
+    border-bottom:1px solid var(--border);
+  }
+  .rail ol{ list-style:none; padding:0; margin:0; }
+  .rail li{ margin:0; }
+  .rail a{
+    display:flex;
+    gap:0.6em;
+    align-items:baseline;
+    text-decoration:none;
+    color:var(--text-dim);
+    font-size:0.86rem;
+    padding:0.42em 0.5em;
+    border-radius:6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .rail a .n{
+    font-family:var(--font-code);
+    font-size:0.78rem;
+    color:var(--text-dim);
+    flex-shrink:0;
+    width:1.4em;
+  }
+  .rail a:hover{ background:var(--surface-2); color:var(--text); }
+  .rail a.active{ color:var(--teal); background:var(--teal-soft); }
+  .rail a.active .n{ color:var(--teal); }
+
+  .topnav{ display:none; }
+
+  main{
+    flex:1;
+    min-width:0;
+    padding:2.4rem 3rem 6rem 3rem;
+  }
+  section{
+    padding-top:1.2rem;
+    margin-bottom:3.2rem;
+    scroll-margin-top:1.5rem;
+  }
+  .eyebrow{
+    color:var(--text-dim);
+    font-size:0.9rem;
+    margin:0 0 0.3em 0;
+  }
+
+  @media (max-width: 980px){
+    .rail{ display:none; }
+    .topnav{
+      display:flex;
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      overflow-x:auto;
+      padding:0.6rem 1rem;
+      gap:0.4rem;
+      -webkit-overflow-scrolling:touch;
+    }
+    .topnav a{
+      flex-shrink:0;
+      font-size:0.8rem;
+      color:var(--text-dim);
+      text-decoration:none;
+      padding:0.35em 0.7em;
+      border-radius:20px;
+      border:1px solid var(--border);
+      white-space:nowrap;
+    }
+    .topnav a.active{ color:var(--teal); border-color:var(--teal); background:var(--teal-soft); }
+    main{ padding:1.6rem 1.2rem 4rem 1.2rem; }
+    h1{ font-size:1.7rem; }
+  }
+
+  /* ============ Header / hero ============ */
+  .hero{
+    padding:2.6rem 0 1rem 0;
+    border-bottom:1px solid var(--border);
+    margin-bottom:2.6rem;
+  }
+  .hero .kicker{
+    color:var(--teal);
+    font-weight:600;
+    font-size:0.95rem;
+    margin-bottom:0.4rem;
+  }
+  .hero h1{ margin-bottom:0.5rem; }
+  .hero .sub{ color:var(--text-dim); font-size:1.05rem; max-width:62ch; }
+
+  .switcher{
+    margin-top:1.8rem;
+    display:flex;
+    gap:1.6rem;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .switcher-buttons{ display:flex; flex-direction:column; gap:0.5rem; }
+  .provider-btn{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:0.6em 1em;
+    font-family:var(--font-ui);
+    font-size:0.92rem;
+    cursor:pointer;
+    text-align:left;
+    box-shadow:var(--shadow);
+  }
+  .provider-btn .dot{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; }
+  .provider-btn.active{ border-color:var(--teal); color:var(--teal); }
+  .provider-btn.active .dot{ background:var(--teal); }
+  .switcher-demo{
+    flex:1;
+    min-width:280px;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.1em 1.3em;
+  }
+  .switcher-demo .line1{ color:#7C8199; font-family:var(--font-code); font-size:0.82rem; margin-bottom:0.5em;}
+  .switcher-demo .line2{ font-family:var(--font-code); font-size:0.95rem; color:var(--code-text); }
+  .switcher-note{ color:var(--text-dim); font-size:0.85rem; margin-top:0.9em; }
+  #swStrategy{ color:#7FCFC0; }
+
+  /* ============ Term definitions ============ */
+  .term{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--teal);
+    border-radius:6px;
+    padding:0.9em 1.1em;
+    margin:0 0 1.1em 0;
+    font-size:0.94rem;
+  }
+  .term .word{ font-weight:600; color:var(--teal); }
+  .term .ex{ color:var(--text-dim); }
+  .term code{ background:var(--surface-2); }
+
+  /* ============ Callouts / cards ============ */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin-bottom:1.3em;
+    box-shadow:var(--shadow);
+  }
+  .card h3{ margin-top:0; }
+  .bad-tag, .good-tag{
+    display:inline-block;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:0.15em 0.6em;
+    border-radius:20px;
+    margin-bottom:0.7em;
+  }
+  .bad-tag{ background:var(--rust-soft); color:var(--rust); }
+  .good-tag{ background:var(--teal-soft); color:var(--teal); }
+  .consequence-list li::marker{ color:var(--rust); }
+  .consequence-list{ background:var(--rust-soft); padding:1em 1.2em 1em 2.1em; border-radius:8px; margin-bottom:1.1em; }
+  .consequence-list li{ color:var(--text); }
+
+  /* ============ Quiz ============ */
+  .quiz{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin:1.6em 0;
+  }
+  .quiz .q-label{ color:var(--gold); font-weight:600; font-size:0.85rem; margin-bottom:0.4em; }
+  .quiz .q-prompt{ font-weight:600; margin-bottom:1em; }
+  .quiz .options{ display:flex; flex-direction:column; gap:0.55em; margin-bottom:0.8em; }
+  .quiz .option{
+    text-align:left;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0.7em 1em;
+    font-family:var(--font-ui);
+    font-size:0.93rem;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .quiz .option:hover:not(:disabled){ border-color:var(--teal); }
+  .quiz .option:disabled{ cursor:default; }
+  .quiz .option.is-correct{ border-color:var(--teal); background:var(--teal-soft); }
+  .quiz .option.is-incorrect{ border-color:var(--rust); background:var(--rust-soft); }
+  .quiz .verdict{ font-weight:600; margin-bottom:0.4em; display:none; }
+  .quiz .verdict.good{ color:var(--teal); display:block; }
+  .quiz .verdict.bad{ color:var(--rust); display:block; }
+  .quiz .explain{ display:none; font-size:0.92rem; color:var(--text-dim); background:var(--surface-2); padding:0.9em 1em; border-radius:8px; }
+
+  /* ============ Details / reveal ============ */
+  details.reveal{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:0.2em 1.4em;
+    margin:1.2em 0;
+  }
+  details.reveal summary{
+    cursor:pointer;
+    padding:0.9em 0;
+    font-weight:600;
+    color:var(--gold);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:0.5em;
+  }
+  details.reveal summary::-webkit-details-marker{ display:none; }
+  details.reveal summary::before{
+    content:"▸";
+    display:inline-block;
+    transition:transform 0.15s;
+    color:var(--gold);
+  }
+  details.reveal[open] summary::before{ transform:rotate(90deg); }
+  details.reveal .reveal-body{ padding:0 0 1.1em 0; border-top:1px solid var(--border); margin-top:0.2em; padding-top:1em; }
+
+  /* ============ Diagram ============ */
+  .diagram-wrap{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.2rem;
+    margin-bottom:1.3em;
+    overflow-x:auto;
+  }
+  .uml-box{ fill:var(--surface-2); stroke:var(--border); stroke-width:1.2; }
+  .uml-box.ctx{ stroke:var(--gold); }
+  .uml-box.iface{ stroke:var(--teal); }
+  .uml-text{ fill:var(--text); font-family:var(--font-code); font-size:12px; }
+  .uml-title{ fill:var(--text); font-family:var(--font-ui); font-weight:600; font-size:13px; }
+  .uml-stereotype{ fill:var(--text-dim); font-family:var(--font-ui); font-size:11px; font-style:italic; }
+  .uml-line{ stroke:var(--text-dim); stroke-width:1.3; fill:none; }
+  .uml-line.dashed{ stroke-dasharray:5,4; }
+  .uml-line.creates{ stroke:var(--gold); stroke-width:1.4; stroke-dasharray:2,4; }
+  .uml-arrow{ fill:var(--text-dim); }
+  .uml-arrow.creates{ fill:var(--gold); }
+  .uml-diamond{ fill:var(--gold); }
+  .uml-label{ fill:var(--gold); font-family:var(--font-ui); font-size:11px; font-weight:600; font-style:italic; }
+
+  /* ============ Domain example grid ============ */
+  .domain-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  @media (max-width:760px){ .domain-grid{ grid-template-columns:1fr; } }
+  .domain-card h4{ color:var(--teal); font-size:0.95rem; margin-bottom:0.5em; }
+
+  /* ============ Comparison table ============ */
+  .compare{ width:100%; border-collapse:collapse; margin-bottom:1em; font-size:0.92rem; }
+  .compare th, .compare td{ border:1px solid var(--border); padding:0.7em 0.9em; text-align:left; vertical-align:top; }
+  .compare th{ background:var(--surface-2); font-weight:600; }
+  .rule-line{
+    background:var(--gold-soft);
+    border-left:3px solid var(--gold);
+    padding:0.8em 1.1em;
+    border-radius:6px;
+    font-size:0.93rem;
+  }
+
+  /* ============ Cheat sheet ============ */
+  .cheat{
+    background:var(--surface);
+    border:1px solid var(--teal);
+    border-radius:12px;
+    padding:1.6em 1.8em;
+  }
+  .cheat dt{ color:var(--teal); font-weight:600; font-size:0.85rem; margin-top:0.9em; }
+  .cheat dt:first-child{ margin-top:0; }
+  .cheat dd{ margin:0.2em 0 0 0; }
+
+  .exercise-box{
+    background:var(--gold-soft);
+    border:1px solid var(--gold);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+  }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:2rem 3rem 3rem 3rem;
+    color:var(--text-dim);
+    font-size:0.85rem;
+    border-top:1px solid var(--border);
+  }
+  @media (max-width: 980px){ footer{ padding:2rem 1.2rem 3rem 1.2rem; } }
+
+  .also-note{
+    background:var(--surface-2);
+    border-radius:8px;
+    padding:0.9em 1.1em;
+    font-size:0.9rem;
+    color:var(--text-dim);
+    margin-bottom:1em;
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav" id="topnav" aria-label="Section navigation"></nav>
+
+<div class="shell">
+  <nav class="rail" aria-label="Lesson sections">
+    <div class="rail-title">Factory Method</div>
+    <ol id="railList"></ol>
+  </nav>
+
+  <main>
+    <header class="hero" id="s-hero">
+      <div class="kicker">Design pattern · Factory Method</div>
+      <h1>Factory Method</h1>
+      <p class="sub">You already know SOLID and OOP fundamentals, and how Strategy swaps interchangeable behavior.
+      Factory Method is about a different question: not "which behavior do I run", but "which class do I build".
+      Pick a vector store backend below to see the shape before we name it.</p>
+
+      <div class="switcher">
+        <div class="switcher-buttons" role="group" aria-label="Choose a vector store backend">
+          <button class="provider-btn active" data-provider="chroma" data-line="factory = ChromaVectorStoreFactory()" data-desc="ChromaVectorStoreFactory builds a ChromaVectorStore, wired to a local host and port.">
+            <span class="dot"></span> Chroma
+          </button>
+          <button class="provider-btn" data-provider="qdrant" data-line="factory = QdrantVectorStoreFactory()" data-desc="QdrantVectorStoreFactory builds a QdrantVectorStore, wired to a collection name and a cluster URL.">
+            <span class="dot"></span> Qdrant
+          </button>
+          <button class="provider-btn" data-provider="pinecone" data-line="factory = PineconeVectorStoreFactory()" data-desc="PineconeVectorStoreFactory builds a PineconeVectorStore, wired to an API key and an index name.">
+            <span class="dot"></span> Pinecone
+          </button>
+        </div>
+        <div class="switcher-demo">
+          <div class="line1">pipeline.py — the code that runs a retrieval query</div>
+          <div class="line2"><span id="swStrategy">factory = ChromaVectorStoreFactory()</span><br>factory.run_query(embedding, top_k=<span class="hl">5</span>)</div>
+          <div class="switcher-note" id="swNote">ChromaVectorStoreFactory builds a <code>ChromaVectorStore</code>, wired to a local host and port.</div>
+        </div>
+      </div>
+      <p class="switcher-note" style="margin-top:1.1em;">Notice what <strong>doesn't</strong> change when you click a different backend: the second line,
+      <code>run_query</code>. That line has no idea which vector database it's about to talk to. That's Factory Method.</p>
+    </header>
+
+    <!-- ================= 1. THE PROBLEM ================= -->
+    <section id="s-problem">
+      <p class="eyebrow">1 · The problem</p>
+      <h2>A RAG pipeline that needs to try three vector databases</h2>
+      <p>You're building the retrieval half of a retrieval-augmented generation pipeline. It embeds a query and
+      looks up the nearest chunks in a vector store. Right now that's ChromaDB, running locally. Your team is
+      about to run a bake-off: the same pipeline needs to run against Qdrant and Pinecone too, so you can compare
+      recall and latency before picking one for production. Each client library wants different constructor
+      arguments and a different method to run a similarity search.</p>
+
+      <div class="term">
+        <span class="word">Coupling</span> — how much one piece of code depends on the specific details of another
+        piece of code. <span class="ex">Example: a function that calls <code>chromadb.Client(host, port)</code>
+        directly is <em>tightly coupled</em> to Chroma's constructor — swap the backend, and every call site that
+        constructed a Chroma client has to change too.</span>
+      </div>
+
+      <p>Here's the first version, written back when Chroma was the only option anyone needed.</p>
+    </section>
+
+    <!-- ================= 2. BAD EXAMPLE ================= -->
+    <section id="s-bad">
+      <p class="eyebrow">2 · The naive version</p>
+      <h2>Constructors, scattered across the codebase</h2>
+      <div class="card">
+        <span class="bad-tag">Works, until you need a second backend</span>
+        <pre><code><span class="cm"># retrieval.py</span>
+<span class="kw">import</span> chromadb
+
+<span class="kw">def</span> <span class="fn">run_query</span>(embedding: <span class="tp">list</span>[<span class="tp">float</span>], top_k: <span class="tp">int</span>) -> <span class="tp">list</span>[<span class="tp">dict</span>]:
+    client = chromadb.Client(host=<span class="st">"localhost"</span>, port=<span class="hl">8000</span>)
+    collection = client.get_collection(<span class="st">"docs"</span>)
+    <span class="kw">return</span> collection.query(query_embeddings=[embedding], n_results=top_k)
+
+<span class="cm"># eval_harness.py — a second, separate call site</span>
+<span class="kw">def</span> <span class="fn">score_pipeline</span>(queries: <span class="tp">list</span>[<span class="tp">dict</span>]) -> <span class="tp">float</span>:
+    client = chromadb.Client(host=<span class="st">"localhost"</span>, port=<span class="hl">8000</span>)  <span class="cm"># duplicated</span>
+    collection = client.get_collection(<span class="st">"docs"</span>)
+    <span class="cm"># ... run each query, compare against a labeled set ...</span></code></pre>
+
+        <p>When the Qdrant bake-off ticket lands, here's what it actually costs:</p>
+        <ul class="consequence-list">
+          <li>Both <code>run_query</code> and <code>score_pipeline</code> call <code>chromadb.Client(...)</code> directly. Adding Qdrant means finding every one of these call sites and rewriting each one — and any you miss keeps quietly running against Chroma.</li>
+          <li>There's no single place that owns "how do we build a vector store client." That knowledge is duplicated wherever a client gets constructed, so a change to connection settings (a new auth token, a new port) means another find-and-replace across the codebase.</li>
+          <li>You can't parametrize the backend at runtime — say, from a config file or an environment variable — without threading an if/elif into every function that currently calls <code>chromadb.Client(...)</code> directly.</li>
+          <li>Testing <code>run_query</code> in isolation means either standing up a real Chroma instance or patching the exact line <code>chromadb.Client(...)</code> inside the function — there's no seam to inject a fake client through.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= 3. TRANSFORM STEP BY STEP ================= -->
+    <section id="s-transform">
+      <p class="eyebrow">3 · Building the fix, one step at a time</p>
+      <h2>From scattered constructors to one designated builder</h2>
+
+      <h3>Step 1 — pull construction into one function</h3>
+      <p>The smallest useful move: stop calling <code>chromadb.Client(...)</code> everywhere, and call one function
+      instead.</p>
+      <pre><code><span class="kw">def</span> <span class="fn">build_chroma_collection</span>():
+    client = chromadb.Client(host=<span class="st">"localhost"</span>, port=<span class="hl">8000</span>)
+    <span class="kw">return</span> client.get_collection(<span class="st">"docs"</span>)
+
+<span class="cm"># both call sites now call this instead of constructing a client themselves</span></code></pre>
+      <p>This is a <strong>simple factory</strong> — one function that owns construction. It already fixes the
+      duplication problem. But if you add a <code>backend</code> parameter and an if/elif inside
+      <code>build_chroma_collection</code> to also handle Qdrant and Pinecone, you're back to editing one growing
+      function every time a backend is added — the same shape of problem as Section 2, just moved to a single
+      location instead of scattered across several. Factory Method fixes the deeper issue: it makes adding a
+      backend mean <em>writing new code</em>, not editing a shared function.</p>
+
+      <h3>Step 2 — separate "what a vector store can do" from "which one you have"</h3>
+      <div class="term">
+        <span class="word">Interface</span> — a contract that says which methods a class must provide, without
+        saying how they work. <span class="ex">Example: "anything that claims to be a vector store must have a
+        <code>query(embedding, top_k)</code> method that returns matches" — that's the whole contract.</span>
+      </div>
+      <p>In Python, you write an interface with <code>abc.ABC</code> (Abstract Base Class) and
+      <code>@abstractmethod</code>. A class that inherits from it without implementing every abstract method
+      can't be instantiated.</p>
+      <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="cm">### Product — what every backend must be able to do</span>
+<span class="kw">class</span> <span class="fn">VectorStore</span>(ABC):
+    <span class="cm">"""The contract every vector store backend must satisfy."""</span>
+
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">query</span>(<span class="kw">self</span>, embedding: <span class="tp">list</span>[<span class="tp">float</span>], top_k: <span class="tp">int</span>) -> <span class="tp">list</span>[<span class="tp">dict</span>]:
+        <span class="cm">"""Return the top_k nearest matches to embedding."""</span>
+        ...</code></pre>
+      <p>In Factory Method's own vocabulary, <code>VectorStore</code> is called the
+      <span class="word" style="color:var(--teal);">Product</span> — the thing being built.</p>
+
+      <h3>Step 3 — one class per backend, implementing that contract</h3>
+      <div class="term">
+        <span class="word">Concrete product</span> — a class that implements the product interface with one
+        specific backend's behavior. <span class="ex">Example: <code>ChromaVectorStore</code> is a concrete
+        product — it's one specific way of satisfying <code>VectorStore</code>'s contract.</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="fn">ChromaVectorStore</span>(VectorStore):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, host: <span class="tp">str</span>, port: <span class="tp">int</span>) -> <span class="tp">None</span>:
+        <span class="kw">import</span> chromadb
+        <span class="kw">self</span>._collection = chromadb.Client(host=host, port=port).get_collection(<span class="st">"docs"</span>)
+
+    <span class="kw">def</span> <span class="fn">query</span>(<span class="kw">self</span>, embedding: <span class="tp">list</span>[<span class="tp">float</span>], top_k: <span class="tp">int</span>) -> <span class="tp">list</span>[<span class="tp">dict</span>]:
+        <span class="kw">return</span> <span class="kw">self</span>._collection.query(query_embeddings=[embedding], n_results=top_k)
+
+
+<span class="kw">class</span> <span class="fn">QdrantVectorStore</span>(VectorStore):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, url: <span class="tp">str</span>, collection_name: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">import</span> qdrant_client
+        <span class="kw">self</span>._client = qdrant_client.QdrantClient(url=url)
+        <span class="kw">self</span>._collection_name = collection_name
+
+    <span class="kw">def</span> <span class="fn">query</span>(<span class="kw">self</span>, embedding: <span class="tp">list</span>[<span class="tp">float</span>], top_k: <span class="tp">int</span>) -> <span class="tp">list</span>[<span class="tp">dict</span>]:
+        <span class="kw">return</span> <span class="kw">self</span>._client.search(<span class="kw">self</span>._collection_name, query_vector=embedding, limit=top_k)</code></pre>
+
+      <h3>Step 4 — a designated builder for each product, sharing one orchestration method</h3>
+      <div class="term">
+        <span class="word">Factory method</span> — a method whose only job is to construct and return an object, so
+        the calling code never has to call a constructor directly. <span class="ex">Example:
+        <code>create_store()</code> below is a factory method — it's the one place responsible for deciding which
+        <code>VectorStore</code> subclass to build and how to configure it.</span>
+      </div>
+      <div class="term">
+        <span class="word">Creator</span> — a class that contains a factory method, plus whatever surrounding logic
+        needs the object that factory method produces. <span class="ex">Example: <code>VectorStoreFactory</code>
+        below is the Creator — it owns <code>create_store()</code> and <code>run_query()</code>, but never
+        mentions <code>ChromaVectorStore</code> or <code>QdrantVectorStore</code> by name.</span>
+      </div>
+      <div class="term">
+        <span class="word">Polymorphism</span> — calling the same method name on different objects and getting
+        each object's own behavior, without checking which type you're holding. <span class="ex">Example:
+        <code>self.create_store()</code> below returns a <code>ChromaVectorStore</code> when called on
+        <code>ChromaVectorStoreFactory</code>, or a <code>QdrantVectorStore</code> when called on
+        <code>QdrantVectorStoreFactory</code> — <code>run_query</code> never checks which one it got.</span>
+      </div>
+      <pre><code><span class="cm">### Creator — owns the factory method, plus logic that uses its result</span>
+<span class="kw">class</span> <span class="fn">VectorStoreFactory</span>(ABC):
+    <span class="cm">"""Builds a VectorStore and runs queries against it, without knowing which backend it is."""</span>
+
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>) -> VectorStore:
+        <span class="cm">"""The factory method — subclasses override this and nothing else."""</span>
+        ...
+
+    <span class="kw">def</span> <span class="fn">run_query</span>(<span class="kw">self</span>, embedding: <span class="tp">list</span>[<span class="tp">float</span>], top_k: <span class="tp">int</span>) -> <span class="tp">list</span>[<span class="tp">dict</span>]:
+        <span class="cm">"""Same for every backend — construction is the only part that varies."""</span>
+        store = <span class="kw">self</span>.create_store()
+        <span class="kw">return</span> store.query(embedding, top_k)
+
+
+<span class="cm">### Concrete creators — each overrides create_store, and nothing else</span>
+<span class="kw">class</span> <span class="fn">ChromaVectorStoreFactory</span>(VectorStoreFactory):
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>) -> VectorStore:
+        <span class="kw">return</span> ChromaVectorStore(host=<span class="st">"localhost"</span>, port=<span class="hl">8000</span>)
+
+
+<span class="kw">class</span> <span class="fn">QdrantVectorStoreFactory</span>(VectorStoreFactory):
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>) -> VectorStore:
+        <span class="kw">return</span> QdrantVectorStore(url=<span class="st">"http://localhost:6333"</span>, collection_name=<span class="st">"docs"</span>)
+
+
+<span class="cm"># usage — pipeline.py and eval_harness.py both call this, never a constructor</span>
+factory = ChromaVectorStoreFactory()
+results = factory.run_query(embedding, top_k=<span class="hl">5</span>)
+
+<span class="cm"># bake-off: swap the backend by swapping which factory you build</span>
+factory = QdrantVectorStoreFactory()
+results = factory.run_query(embedding, top_k=<span class="hl">5</span>)</code></pre>
+      <p><code>run_query</code> is written exactly once, on <code>VectorStoreFactory</code>. Adding Pinecone means
+      writing <code>PineconeVectorStore</code> and <code>PineconeVectorStoreFactory</code> — two new classes — and
+      touching nothing that already exists.</p>
+    </section>
+
+    <!-- Checkpoint 1 -->
+    <section>
+      <div class="quiz" data-correct="c">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Your team adds a fourth backend, Weaviate. With the design above, what do you have to write?</div>
+        <div class="options">
+          <button class="option" data-id="a">Edit <code>VectorStoreFactory.run_query</code> to add a branch for Weaviate.</button>
+          <button class="option" data-id="b">Edit the <code>VectorStore</code> interface to add a <code>query_weaviate</code> method.</button>
+          <button class="option" data-id="c">Two new classes: <code>WeaviateVectorStore</code> (implements <code>query</code>) and <code>WeaviateVectorStoreFactory</code> (implements <code>create_store</code>). Nothing else changes.</button>
+          <button class="option" data-id="d">Nothing — Python discovers new <code>VectorStoreFactory</code> subclasses automatically.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite. <code>run_query</code> only calls <code>self.create_store()</code> — it has no backend-specific branches to add. If you find yourself editing it for a new backend, the design has slid back toward the scattered-constructors version.</div>
+        <div class="explain" data-for="b">Not quite. <code>VectorStore</code> defines one shared method, <code>query</code>, that every concrete product implements in its own way. A backend-specific method name on the interface would force every existing product (Chroma, Qdrant) to also implement a method they don't need.</div>
+        <div class="explain" data-for="c">Correct. <code>run_query</code> stays untouched because it never names a concrete product or a concrete creator — it only calls the abstract <code>create_store()</code>, and polymorphism handles the rest once you hand it a new subclass pair.</div>
+        <div class="explain" data-for="d">Not quite — nothing here is automatic. You still have to construct a <code>WeaviateVectorStoreFactory()</code> somewhere and use it; Python doesn't scan for new subclasses on its own.</div>
+      </div>
+    </section>
+
+    <!-- ================= 4. DIAGRAM ================= -->
+    <section id="s-diagram">
+      <p class="eyebrow">4 · The shape of it</p>
+      <h2>Two hierarchies, joined by one "creates" relationship</h2>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 620" width="100%" style="max-width:680px; display:block; margin:0 auto;" role="img" aria-label="UML-style diagram: VectorStoreFactory creator hierarchy on top, with ChromaVectorStoreFactory, QdrantVectorStoreFactory and PineconeVectorStoreFactory; VectorStore product hierarchy below, with ChromaVectorStore, QdrantVectorStore and PineconeVectorStore; a creates arrow links the two abstract classes">
+          <!-- Creator (top of upper tree) -->
+          <rect class="uml-box ctx" x="270" y="30" width="230" height="80" rx="6"></rect>
+          <text class="uml-stereotype" x="385" y="50" text-anchor="middle">creator</text>
+          <text class="uml-title" x="385" y="70" text-anchor="middle">VectorStoreFactory</text>
+          <text class="uml-text" x="385" y="92" text-anchor="middle">+ create_store(), + run_query()</text>
+
+          <!-- Concrete creators -->
+          <rect class="uml-box" x="30" y="220" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="120" y="245" text-anchor="middle">ChromaVectorStore</text>
+          <text class="uml-title" x="120" y="260" text-anchor="middle">Factory</text>
+          <text class="uml-text" x="120" y="278" text-anchor="middle">+ create_store()</text>
+
+          <rect class="uml-box" x="280" y="220" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="370" y="245" text-anchor="middle">QdrantVectorStore</text>
+          <text class="uml-title" x="370" y="260" text-anchor="middle">Factory</text>
+          <text class="uml-text" x="370" y="278" text-anchor="middle">+ create_store()</text>
+
+          <rect class="uml-box" x="510" y="220" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="600" y="245" text-anchor="middle">PineconeVectorStore</text>
+          <text class="uml-title" x="600" y="260" text-anchor="middle">Factory</text>
+          <text class="uml-text" x="600" y="278" text-anchor="middle">+ create_store()</text>
+
+          <!-- inheritance: concrete creators -> Creator -->
+          <path class="uml-line dashed" d="M120,220 L120,150 L385,150 L385,110"></path>
+          <polygon class="uml-arrow" points="385,110 379,122 391,122"></polygon>
+
+          <path class="uml-line dashed" d="M370,220 L370,180 L385,180 L385,110"></path>
+          <polygon class="uml-arrow" points="385,110 379,122 391,122"></polygon>
+
+          <path class="uml-line dashed" d="M600,220 L600,150 L385,150 L385,110"></path>
+          <polygon class="uml-arrow" points="385,110 379,122 391,122"></polygon>
+
+          <!-- creates: Creator -> Product (vertical link between the two trees) -->
+          <line class="uml-line creates" x1="385" y1="110" x2="385" y2="330"></line>
+          <polygon class="uml-arrow creates" points="385,330 379,318 391,318"></polygon>
+          <text class="uml-label" x="400" y="225" text-anchor="start">«creates»</text>
+
+          <!-- Product (top of lower tree) -->
+          <rect class="uml-box iface" x="270" y="330" width="230" height="70" rx="6"></rect>
+          <text class="uml-stereotype" x="385" y="350" text-anchor="middle">product / interface</text>
+          <text class="uml-title" x="385" y="370" text-anchor="middle">VectorStore</text>
+          <text class="uml-text" x="385" y="390" text-anchor="middle">+ query(embedding, top_k)</text>
+
+          <!-- Concrete products -->
+          <rect class="uml-box" x="30" y="520" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="120" y="550" text-anchor="middle">ChromaVectorStore</text>
+          <text class="uml-text" x="120" y="572" text-anchor="middle">+ query(...)</text>
+
+          <rect class="uml-box" x="280" y="520" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="370" y="550" text-anchor="middle">QdrantVectorStore</text>
+          <text class="uml-text" x="370" y="572" text-anchor="middle">+ query(...)</text>
+
+          <rect class="uml-box" x="510" y="520" width="180" height="70" rx="6"></rect>
+          <text class="uml-title" x="600" y="550" text-anchor="middle">PineconeVectorStore</text>
+          <text class="uml-text" x="600" y="572" text-anchor="middle">+ query(...)</text>
+
+          <!-- realization: concrete products -> Product -->
+          <path class="uml-line dashed" d="M120,520 L120,450 L385,450 L385,400"></path>
+          <polygon class="uml-arrow" points="385,400 379,412 391,412"></polygon>
+
+          <path class="uml-line dashed" d="M370,520 L370,480 L385,480 L385,400"></path>
+          <polygon class="uml-arrow" points="385,400 379,412 391,412"></polygon>
+
+          <path class="uml-line dashed" d="M600,520 L600,450 L385,450 L385,400"></path>
+          <polygon class="uml-arrow" points="385,400 379,412 391,412"></polygon>
+        </svg>
+        <p style="text-align:center; color:var(--text-dim); font-size:0.85rem; margin:0.6em 0 0 0;">
+          Dashed line + arrow = <em>inherits / implements</em>. Dotted gold line + arrow = <em>creates</em> — the one thing the Creator's factory method is responsible for.
+        </p>
+      </div>
+      <p>Two independent hierarchies, not one. <code>ChromaVectorStoreFactory</code> knows about
+      <code>ChromaVectorStore</code> — that pairing is the whole point of overriding <code>create_store()</code>.
+      But <code>VectorStoreFactory</code> itself, and its shared <code>run_query</code> method, only ever touch
+      the <code>VectorStore</code> product interface at the top of the lower tree.</p>
+    </section>
+
+    <!-- Checkpoint 2 -->
+    <section>
+      <div class="quiz" data-correct="a">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Why does <code>VectorStoreFactory.run_query()</code> call <code>self.create_store()</code> instead of constructing <code>ChromaVectorStore(...)</code> directly?</div>
+        <div class="options">
+          <button class="option" data-id="a"><code>run_query</code> is defined once, on the shared Creator, and has to work correctly no matter which concrete creator it's called through — it can't hard-code one product's class name.</button>
+          <button class="option" data-id="b">Because Python requires every method body to call an abstract method before returning.</button>
+          <button class="option" data-id="c">Because constructing an object directly inside a method is not allowed in Python.</button>
+          <button class="option" data-id="d">It's purely stylistic — calling <code>self.create_store()</code> or <code>ChromaVectorStore(...)</code> directly behaves identically here.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Correct. <code>run_query</code> lives on <code>VectorStoreFactory</code>, and every concrete creator inherits it unchanged. The only way that one method body can work for Chroma, Qdrant, and Pinecone alike is by asking <code>self</code> for the product through the overridden factory method, rather than naming a specific class.</div>
+        <div class="explain" data-for="b">Not quite — that's not a language rule. Python doesn't require calling abstract methods anywhere in particular; this is a design choice, made so the shared method stays backend-agnostic.</div>
+        <div class="explain" data-for="c">Not quite — Python allows direct construction anywhere. The problem isn't legality, it's that direct construction inside the shared <code>run_query</code> would pin it to one backend, defeating the point of having subclasses at all.</div>
+        <div class="explain" data-for="d">Not quite. If <code>run_query</code> constructed <code>ChromaVectorStore(...)</code> directly, every concrete creator's inherited <code>run_query</code> would always return Chroma results, regardless of which subclass you called it on — <code>QdrantVectorStoreFactory().run_query(...)</code> would silently query Chroma.</div>
+      </div>
+    </section>
+
+    <!-- ================= 5. PREDICT THE OUTPUT ================= -->
+    <section id="s-predict">
+      <p class="eyebrow">5 · Predict the output</p>
+      <h2>What does this print?</h2>
+      <p>Assume each product's <code>query</code> is mocked to just tag its backend, so you can trace the call
+      without a real database:</p>
+      <pre><code><span class="kw">class</span> <span class="fn">QdrantVectorStore</span>(VectorStore):
+    <span class="kw">def</span> <span class="fn">query</span>(<span class="kw">self</span>, embedding, top_k):
+        <span class="kw">return</span> <span class="st">f"[qdrant] top {top_k} matches"</span>
+
+<span class="kw">class</span> <span class="fn">PineconeVectorStore</span>(VectorStore):
+    <span class="kw">def</span> <span class="fn">query</span>(<span class="kw">self</span>, embedding, top_k):
+        <span class="kw">return</span> <span class="st">f"[pinecone] top {top_k} matches"</span>
+
+<span class="kw">class</span> <span class="fn">QdrantVectorStoreFactory</span>(VectorStoreFactory):
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>):
+        <span class="kw">return</span> QdrantVectorStore()
+
+<span class="kw">class</span> <span class="fn">PineconeVectorStoreFactory</span>(VectorStoreFactory):
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>):
+        <span class="kw">return</span> PineconeVectorStore()
+
+factory = QdrantVectorStoreFactory()
+<span class="fn">print</span>(factory.run_query(embedding=[<span class="hl">0.1</span>, <span class="hl">0.2</span>], top_k=<span class="hl">3</span>))
+
+factory = PineconeVectorStoreFactory()
+<span class="fn">print</span>(factory.run_query(embedding=[<span class="hl">0.1</span>, <span class="hl">0.2</span>], top_k=<span class="hl">3</span>))</code></pre>
+      <p>Write down what the two <code>print</code> calls output before opening the answer. Remember:
+      <code>run_query</code> itself is only defined once, on <code>VectorStoreFactory</code>.</p>
+      <details class="reveal">
+        <summary>Reveal answer</summary>
+        <div class="reveal-body">
+          <pre><code>[qdrant] top 3 matches
+[pinecone] top 3 matches</code></pre>
+          <p>Each <code>factory</code> is a different concrete creator, so <code>self.create_store()</code>
+          resolves polymorphically to that creator's own override — <code>QdrantVectorStore()</code> the first
+          time, <code>PineconeVectorStore()</code> the second. <code>run_query</code>'s own code never changed
+          between the two calls; only which object <code>create_store()</code> handed back changed.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 6. OTHER DOMAINS ================= -->
+    <section id="s-domains">
+      <p class="eyebrow">6 · Same shape, different domain</p>
+      <h2>This isn't a vector-database-specific trick</h2>
+      <p>Factory Method shows up anywhere a class needs an object built for it, and the exact class to build
+      should stay swappable. Two more, from unrelated domains:</p>
+      <div class="domain-grid">
+        <div class="card domain-card">
+          <h4>Payments — checkout gateways</h4>
+          <p>A checkout flow needs to charge through Stripe today and Adyen for European customers next quarter,
+          with the actual charging logic staying identical either way.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">PaymentGateway</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">charge</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>) -> <span class="tp">str</span>: ...
+
+<span class="kw">class</span> <span class="fn">StripeGateway</span>(PaymentGateway):
+    <span class="kw">def</span> <span class="fn">charge</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>) -> <span class="tp">str</span>:
+        ...  <span class="cm"># call Stripe's API</span>
+
+<span class="kw">class</span> <span class="fn">PaymentGatewayFactory</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">create_gateway</span>(<span class="kw">self</span>) -> PaymentGateway: ...
+
+    <span class="kw">def</span> <span class="fn">checkout</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>) -> <span class="tp">str</span>:
+        gateway = <span class="kw">self</span>.create_gateway()
+        <span class="kw">return</span> gateway.charge(amount_cents)
+
+<span class="kw">class</span> <span class="fn">StripeGatewayFactory</span>(PaymentGatewayFactory):
+    <span class="kw">def</span> <span class="fn">create_gateway</span>(<span class="kw">self</span>) -> PaymentGateway:
+        <span class="kw">return</span> StripeGateway()</code></pre>
+          <p><code>checkout</code> plays the same role <code>run_query</code> did — written once, works for every
+          gateway.</p>
+        </div>
+        <div class="card domain-card">
+          <h4>Data ingestion — document parsers</h4>
+          <p>An ingestion pipeline needs to extract text from PDFs today, with Markdown and HTML sources coming
+          as the pipeline grows.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">DocumentParser</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">parse</span>(<span class="kw">self</span>, raw_bytes: <span class="tp">bytes</span>) -> <span class="tp">str</span>: ...
+
+<span class="kw">class</span> <span class="fn">PdfParser</span>(DocumentParser):
+    <span class="kw">def</span> <span class="fn">parse</span>(<span class="kw">self</span>, raw_bytes: <span class="tp">bytes</span>) -> <span class="tp">str</span>:
+        ...  <span class="cm"># extract text from PDF bytes</span>
+
+<span class="kw">class</span> <span class="fn">DocumentParserFactory</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">create_parser</span>(<span class="kw">self</span>) -> DocumentParser: ...
+
+    <span class="kw">def</span> <span class="fn">extract_text</span>(<span class="kw">self</span>, raw_bytes: <span class="tp">bytes</span>) -> <span class="tp">str</span>:
+        parser = <span class="kw">self</span>.create_parser()
+        <span class="kw">return</span> parser.parse(raw_bytes)
+
+<span class="kw">class</span> <span class="fn">PdfParserFactory</span>(DocumentParserFactory):
+    <span class="kw">def</span> <span class="fn">create_parser</span>(<span class="kw">self</span>) -> DocumentParser:
+        <span class="kw">return</span> PdfParser()</code></pre>
+          <p>Same shape again: <code>DocumentParserFactory</code> never names <code>PdfParser</code> — only
+          <code>PdfParserFactory</code> does.</p>
+        </div>
+      </div>
+
+      <div class="also-note">
+        Three domains, one shape: a Creator (<code>VectorStoreFactory</code>, <code>PaymentGatewayFactory</code>,
+        <code>DocumentParserFactory</code>) has one shared method that needs a Product, gets it from an overridable
+        factory method, and never names a concrete Product class itself.
+      </div>
+
+      <h3>You've probably already used this without naming it</h3>
+      <p>Python's standard library is full of <strong>classmethods</strong> — methods called on the class itself,
+      not an instance — whose entire job is to build and return an object, as an alternative to calling
+      <code>__init__</code> directly:</p>
+      <pre><code>Path.home()
+datetime.fromtimestamp(<span class="hl">0</span>)
+<span class="tp">dict</span>.fromkeys([<span class="st">"a"</span>, <span class="st">"b"</span>], <span class="hl">0</span>)</code></pre>
+      <p>Each of these <em>is</em> a factory method: a designated method whose whole purpose is constructing an
+      instance in one particular way, chosen instead of calling <code>Path(...)</code> or <code>datetime(...)</code>
+      with the right arguments yourself. You don't get an abstract Creator/Product hierarchy for free this way —
+      but the core idea, a method whose job is "build me one of these", is exactly what
+      <code>create_store()</code> was doing above.</p>
+    </section>
+
+    <!-- Checkpoint 3 -->
+    <section>
+      <div class="quiz" data-correct="a">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Is <code>Path.home()</code> an example of the Factory Method idea?</div>
+        <div class="options">
+          <button class="option" data-id="a">Yes — it's a method whose whole job is to construct and return a <code>Path</code> instance, chosen instead of calling <code>Path()</code> with the home directory's arguments yourself.</button>
+          <button class="option" data-id="b">No — Factory Method requires an abstract Creator base class with a subclass for every variant.</button>
+          <button class="option" data-id="c">No — a <code>classmethod</code> can't be a factory method because it doesn't take <code>self</code>.</button>
+          <button class="option" data-id="d">Yes, but only once you wrap it inside a <code>PathFactory</code> class of your own.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Correct. What makes something a factory method is its job — a dedicated method that builds and returns an object instead of calling the constructor at the call site — not whether it sits inside a full abstract Creator/Product hierarchy. <code>Path.home()</code> plays exactly that role.</div>
+        <div class="explain" data-for="b">Not quite. The abstract Creator/Product hierarchy from this lesson is the classic GoF shape, useful when you need several interchangeable creators. The core idea — a method dedicated to building an object — doesn't require that whole structure to still count.</div>
+        <div class="explain" data-for="c">Not quite. A <code>classmethod</code> takes <code>cls</code> instead of <code>self</code>, but it's still a method whose job is producing an instance — that's the relevant similarity, not the exact parameter name.</div>
+        <div class="explain" data-for="d">Not quite — no wrapper is needed. <code>Path.home()</code> already plays the factory-method role on its own; adding a class around it wouldn't change what it does, just add ceremony.</div>
+      </div>
+    </section>
+
+    <!-- ================= 7. SPOT THE BUG ================= -->
+    <section id="s-bug">
+      <p class="eyebrow">7 · Spot the smell</p>
+      <h2>This code has Creator and Product classes — but something's wrong</h2>
+      <pre><code><span class="kw">class</span> <span class="fn">ChromaVectorStoreFactory</span>(VectorStoreFactory):
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>) -> VectorStore:
+        <span class="kw">return</span> ChromaVectorStore(host=<span class="st">"localhost"</span>, port=<span class="hl">8000</span>)
+
+    <span class="kw">def</span> <span class="fn">run_query</span>(<span class="kw">self</span>, embedding: <span class="tp">list</span>[<span class="tp">float</span>], top_k: <span class="tp">int</span>) -> <span class="tp">list</span>[<span class="tp">dict</span>]:
+        store = ChromaVectorStore(host=<span class="st">"localhost"</span>, port=<span class="hl">8000</span>)
+        <span class="kw">return</span> store.query(embedding, top_k)</code></pre>
+      <p><code>ChromaVectorStoreFactory</code> correctly overrides <code>create_store</code>. Something's still
+      wrong here. What is it, and what happens the day someone changes how <code>VectorStoreFactory.run_query</code>
+      works for everyone else?</p>
+      <details class="reveal">
+        <summary>Reveal explanation</summary>
+        <div class="reveal-body">
+          <p>The bug: <code>ChromaVectorStoreFactory</code> overrides <code>run_query</code> too, and inside it,
+          constructs <code>ChromaVectorStore(...)</code> directly instead of calling <code>self.create_store()</code>
+          — duplicating the exact object-building code that <code>create_store</code> already contains, right next
+          to it.</p>
+          <p>The day someone changes the shared <code>VectorStoreFactory.run_query</code> — say, to add retry logic
+          or logging around every query, for every backend — <code>ChromaVectorStoreFactory</code> won't get that
+          change. Its own copy of <code>run_query</code> shadows the base class's version and has to be updated by
+          hand, separately, or it quietly falls out of sync with every other backend. The fix is to delete this
+          override entirely and let <code>ChromaVectorStoreFactory</code> inherit <code>run_query</code> from
+          <code>VectorStoreFactory</code> unchanged — the whole reason <code>create_store</code> exists is so
+          subclasses never need to touch <code>run_query</code> at all.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 8. WHEN NOT TO USE ================= -->
+    <section id="s-tradeoffs">
+      <p class="eyebrow">8 · Trade-offs</p>
+      <h2>When not to reach for Factory Method</h2>
+      <p>Factory Method costs you a Product interface, a Creator base class, and at least one concrete pair —
+      more files and more indirection than a single constructor call. That's worth it once you have, or clearly
+      expect, more than one thing to build. It's not worth it when you don't.</p>
+      <div class="card">
+        <span class="bad-tag">Over-engineered</span>
+        <pre><code><span class="kw">class</span> <span class="fn">VectorStore</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">query</span>(<span class="kw">self</span>, embedding, top_k): ...
+
+<span class="kw">class</span> <span class="fn">ChromaVectorStore</span>(VectorStore):
+    ...
+
+<span class="kw">class</span> <span class="fn">VectorStoreFactory</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>) -> VectorStore: ...
+
+<span class="kw">class</span> <span class="fn">ChromaVectorStoreFactory</span>(VectorStoreFactory):
+    <span class="kw">def</span> <span class="fn">create_store</span>(<span class="kw">self</span>) -> VectorStore:
+        <span class="kw">return</span> ChromaVectorStore(host=<span class="st">"localhost"</span>, port=<span class="hl">8000</span>)</code></pre>
+        <p>If this is a personal project or a prototype with a hard commitment to ChromaDB and no bake-off on the
+        roadmap, this is four classes for something a single function already says:
+        <code>def build_store(): return ChromaVectorStore(host="localhost", port=8000)</code>. Reach for
+        Factory Method when a second concrete product is real or clearly coming — not "vector databases might
+        theoretically change one day."</p>
+      </div>
+
+      <h3>Factory Method vs. Abstract Factory — easy to mix up</h3>
+      <p>Both hide constructor calls behind a method. The difference is <em>how many related objects</em> get
+      built, and whether they're built together.</p>
+      <table class="compare">
+        <tr><th></th><th>Factory Method</th><th>Abstract Factory</th></tr>
+        <tr><td>What it builds</td><td>One product, via one overridden method (<code>create_store()</code> → a <code>VectorStore</code>)</td><td>A family of related products, via several methods on one factory object</td></tr>
+        <tr><td>Example</td><td><code>ChromaVectorStoreFactory</code> builds a <code>ChromaVectorStore</code>, nothing else</td><td>A <code>ChromaBackendFactory</code> might expose <code>get_store()</code>, <code>get_embedder()</code>, <code>get_reranker()</code> — all guaranteed to be Chroma-compatible with each other</td></tr>
+        <tr><td>How variation happens</td><td>Subclassing the Creator</td><td>Composing several factory methods behind one object, often without subclassing at all</td></tr>
+      </table>
+      <div class="rule-line">One-line rule: building one kind of object, varied by subclass, is Factory Method.
+      Building several related objects together, so they're guaranteed to match each other, is Abstract Factory.</div>
+    </section>
+
+    <!-- ================= 9. PRACTICE ================= -->
+    <section id="s-practice">
+      <p class="eyebrow">9 · Cheat sheet &amp; practice</p>
+      <h2>Cheat sheet</h2>
+      <div class="cheat">
+        <dl>
+          <dt>Problem it solves</dt>
+          <dd>Object construction scattered across the codebase, so adding a new type means hunting down every call site — or one growing if/elif inside a single constructor function.</dd>
+          <dt>Core idea, in one sentence</dt>
+          <dd>Give the class that needs an object a dedicated method for building it, let subclasses override just that method, and write the surrounding logic once against the product interface.</dd>
+          <dt>Trade-off</dt>
+          <dd>A Product interface, a Creator base class, and at least one concrete pair — real structure for a problem that might only ever need one concrete type.</dd>
+          <dt>The smell that tells you to reach for it</dt>
+          <dd>The same constructor call, or an if/elif choosing which class to instantiate, repeated across multiple functions or files — and a new type means editing all of them.</dd>
+        </dl>
+      </div>
+
+      <h2 style="margin-top:2rem;">Your turn</h2>
+      <div class="exercise-box">
+        <p><strong>Scenario:</strong> you're building <code>ReportExporterFactory</code> for a reporting tool that
+        exports a generated report as PDF today. Product wants CSV and Markdown export next quarter, and an Excel
+        export plus a "post straight to Slack" export are already on the roadmap after that.</p>
+        <p><strong>Task:</strong> apply Factory Method to this. Name the Product interface and the method it
+        requires. Name at least two concrete creator classes and which concrete product each one builds. Describe
+        what the shared method on the Creator (something like <code>export(report_data)</code>) is responsible
+        for, and what it explicitly does <em>not</em> know about. You don't need to write the implementation —
+        just describe it clearly enough that you could code it from your own description.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  Factory Method pattern lesson · built for system design / SWE interview prep.
+</footer>
+
+<script>
+(function(){
+  // ---------- Section registry for nav ----------
+  var sections = [
+    {id:'s-hero', label:'Start'},
+    {id:'s-problem', label:'The problem'},
+    {id:'s-bad', label:'Naive version'},
+    {id:'s-transform', label:'Building the fix'},
+    {id:'s-diagram', label:'Class diagram'},
+    {id:'s-predict', label:'Predict output'},
+    {id:'s-domains', label:'Other domains'},
+    {id:'s-bug', label:'Spot the smell'},
+    {id:'s-tradeoffs', label:'Trade-offs'},
+    {id:'s-practice', label:'Cheat sheet'}
+  ];
+
+  var railList = document.getElementById('railList');
+  var topnav = document.getElementById('topnav');
+
+  sections.forEach(function(s, i){
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.dataset.target = s.id;
+    var n = document.createElement('span');
+    n.className = 'n';
+    n.textContent = String(i + 1).padStart(2, '0');
+    a.appendChild(n);
+    a.appendChild(document.createTextNode(s.label));
+    li.appendChild(a);
+    railList.appendChild(li);
+
+    var ta = document.createElement('a');
+    ta.href = '#' + s.id;
+    ta.dataset.target = s.id;
+    ta.textContent = s.label;
+    topnav.appendChild(ta);
+  });
+
+  var allNavLinks = document.querySelectorAll('.rail a, .topnav a');
+
+  function setActive(id){
+    allNavLinks.forEach(function(a){
+      if (a.dataset.target === id) a.classList.add('active');
+      else a.classList.remove('active');
+    });
+  }
+
+  if ('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      var visible = entries.filter(function(e){ return e.isIntersecting; });
+      if (visible.length > 0){
+        visible.sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+        setActive(visible[0].target.id);
+      }
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(function(s){
+      var el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  }
+
+  // ---------- Hero backend switcher ----------
+  var swStrategy = document.getElementById('swStrategy');
+  var swNote = document.getElementById('swNote');
+  document.querySelectorAll('.provider-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.provider-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      swStrategy.textContent = btn.dataset.line;
+      swNote.innerHTML = btn.dataset.desc.replace(/`([^`]+)`/g, '<code>$1</code>');
+    });
+  });
+
+  // ---------- Quiz logic ----------
+  document.querySelectorAll('.quiz').forEach(function(quiz){
+    var correctId = quiz.dataset.correct;
+    var verdictEl = quiz.querySelector('.verdict');
+
+    quiz.querySelectorAll('.option').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (quiz.dataset.answered === 'true') return;
+        quiz.dataset.answered = 'true';
+
+        quiz.querySelectorAll('.option').forEach(function(b){
+          b.disabled = true;
+          if (b.dataset.id === correctId) b.classList.add('is-correct');
+        });
+        if (btn.dataset.id !== correctId) btn.classList.add('is-incorrect');
+
+        quiz.querySelectorAll('.explain').forEach(function(e){ e.style.display = 'none'; });
+        var explanation = quiz.querySelector('.explain[data-for="' + btn.dataset.id + '"]');
+        if (explanation) explanation.style.display = 'block';
+
+        verdictEl.textContent = (btn.dataset.id === correctId) ? 'Correct.' : 'Not quite.';
+        verdictEl.className = 'verdict ' + ((btn.dataset.id === correctId) ? 'good' : 'bad');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
