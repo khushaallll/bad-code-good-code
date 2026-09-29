@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Observer — an interactive lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens — light (default) ============ */
+  :root{
+    --bg:#F3F4F7;
+    --surface:#FFFFFF;
+    --surface-2:#EAEBF0;
+    --text:#1B1E2A;
+    --text-dim:#5A5F72;
+    --border:#D8DAE2;
+    --teal:#177E70;
+    --teal-soft:#E4F2EF;
+    --rust:#AE3F27;
+    --rust-soft:#F6E7E2;
+    --gold:#95681A;
+    --gold-soft:#F5EDDC;
+    --code-bg:#1B1E2A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(20,22,30,0.06);
+    --focus: #2E6DE0;
+    --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161F;
+      --surface:#1C1F2B;
+      --surface-2:#242838;
+      --text:#E7E5DE;
+      --text-dim:#9297AC;
+      --border:#323649;
+      --teal:#4FB8A6;
+      --teal-soft:#1D3833;
+      --rust:#D9714F;
+      --rust-soft:#3A2620;
+      --gold:#D6A552;
+      --gold-soft:#3A3220;
+      --code-bg:#10121A;
+      --code-text:#E7E5DE;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+      --focus:#6FA0FF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161F;
+    --surface:#1C1F2B;
+    --surface-2:#242838;
+    --text:#E7E5DE;
+    --text-dim:#9297AC;
+    --border:#323649;
+    --teal:#4FB8A6;
+    --teal-soft:#1D3833;
+    --rust:#D9714F;
+    --rust-soft:#3A2620;
+    --gold:#D6A552;
+    --gold-soft:#3A3220;
+    --code-bg:#10121A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    --focus:#6FA0FF;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-ui);
+    line-height:1.6;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal);}
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  h1,h2,h3,h4{
+    font-family:var(--font-ui);
+    font-weight:600;
+    line-height:1.25;
+    margin:0 0 0.6em 0;
+  }
+  h1{font-size:2.1rem; font-weight:700;}
+  h2{font-size:1.5rem; letter-spacing:-0.01em;}
+  h3{font-size:1.15rem;}
+  p{margin:0 0 1em 0; max-width:70ch;}
+  ul,ol{margin:0 0 1em 0; padding-left:1.3em;}
+  li{margin-bottom:0.4em;}
+
+  code, pre, .mono{ font-family:var(--font-code); }
+  code{
+    background:var(--surface-2);
+    padding:0.15em 0.4em;
+    border-radius:4px;
+    font-size:0.9em;
+  }
+  pre{
+    background:var(--code-bg);
+    color:var(--code-text);
+    padding:1.1em 1.2em;
+    border-radius:8px;
+    overflow-x:auto;
+    font-size:0.87rem;
+    line-height:1.55;
+    margin:0 0 1em 0;
+    border:1px solid var(--border);
+  }
+  pre code{ background:none; padding:0; font-size:1em; color:inherit; }
+
+  .kw{color:#8FB4E8;}
+  .st{color:#C7D9A0;}
+  .cm{color:#7C8199; font-style:italic;}
+  .fn{color:#E4C07A;}
+  .tp{color:#7FCFC0;}
+  .hl{color:#D6A552;}
+
+  /* ============ Layout shell ============ */
+  .shell{
+    display:flex;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .rail{
+    width:230px;
+    flex-shrink:0;
+    padding:2.2rem 1rem 2rem 1.5rem;
+    position:sticky;
+    top:0;
+    align-self:flex-start;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .rail-title{
+    font-size:0.72rem;
+    color:var(--text-dim);
+    margin:0 0 1rem 0;
+    padding-bottom:0.6rem;
+    border-bottom:1px solid var(--border);
+  }
+  .rail ol{ list-style:none; padding:0; margin:0; }
+  .rail li{ margin:0; }
+  .rail a{
+    display:flex;
+    gap:0.6em;
+    align-items:baseline;
+    text-decoration:none;
+    color:var(--text-dim);
+    font-size:0.86rem;
+    padding:0.42em 0.5em;
+    border-radius:6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .rail a .n{
+    font-family:var(--font-code);
+    font-size:0.78rem;
+    color:var(--text-dim);
+    flex-shrink:0;
+    width:1.4em;
+  }
+  .rail a:hover{ background:var(--surface-2); color:var(--text); }
+  .rail a.active{ color:var(--teal); background:var(--teal-soft); }
+  .rail a.active .n{ color:var(--teal); }
+
+  .topnav{ display:none; }
+
+  main{
+    flex:1;
+    min-width:0;
+    padding:2.4rem 3rem 6rem 3rem;
+  }
+  section{
+    padding-top:1.2rem;
+    margin-bottom:3.2rem;
+    scroll-margin-top:1.5rem;
+  }
+  .eyebrow{
+    color:var(--text-dim);
+    font-size:0.9rem;
+    margin:0 0 0.3em 0;
+  }
+
+  @media (max-width: 980px){
+    .rail{ display:none; }
+    .topnav{
+      display:flex;
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      overflow-x:auto;
+      padding:0.6rem 1rem;
+      gap:0.4rem;
+      -webkit-overflow-scrolling:touch;
+    }
+    .topnav a{
+      flex-shrink:0;
+      font-size:0.8rem;
+      color:var(--text-dim);
+      text-decoration:none;
+      padding:0.35em 0.7em;
+      border-radius:20px;
+      border:1px solid var(--border);
+      white-space:nowrap;
+    }
+    .topnav a.active{ color:var(--teal); border-color:var(--teal); background:var(--teal-soft); }
+    main{ padding:1.6rem 1.2rem 4rem 1.2rem; }
+    h1{ font-size:1.7rem; }
+  }
+
+  /* ============ Header / hero ============ */
+  .hero{
+    padding:2.6rem 0 1rem 0;
+    border-bottom:1px solid var(--border);
+    margin-bottom:2.6rem;
+  }
+  .hero .kicker{
+    color:var(--teal);
+    font-weight:600;
+    font-size:0.95rem;
+    margin-bottom:0.4rem;
+  }
+  .hero h1{ margin-bottom:0.5rem; }
+  .hero .sub{ color:var(--text-dim); font-size:1.05rem; max-width:62ch; }
+
+  .switcher{
+    margin-top:1.8rem;
+    display:flex;
+    gap:1.6rem;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .switcher-buttons{ display:flex; flex-direction:column; gap:0.5rem; }
+  .provider-btn{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:0.6em 1em;
+    font-family:var(--font-ui);
+    font-size:0.92rem;
+    cursor:pointer;
+    text-align:left;
+    box-shadow:var(--shadow);
+  }
+  .provider-btn .dot{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; }
+  .provider-btn.active{ border-color:var(--teal); color:var(--teal); }
+  .provider-btn.active .dot{ background:var(--teal); }
+  .switcher-demo{
+    flex:1;
+    min-width:280px;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.1em 1.3em;
+  }
+  .switcher-demo .line1{ color:#7C8199; font-family:var(--font-code); font-size:0.82rem; margin-bottom:0.5em;}
+  .switcher-demo .line2{ font-family:var(--font-code); font-size:0.95rem; color:var(--code-text); white-space:pre-line; }
+  .switcher-note{ color:var(--text-dim); font-size:0.85rem; margin-top:0.9em; }
+  #swStrategy{ color:#7FCFC0; }
+
+  /* ============ Term definitions ============ */
+  .term{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--teal);
+    border-radius:6px;
+    padding:0.9em 1.1em;
+    margin:0 0 1.1em 0;
+    font-size:0.94rem;
+  }
+  .term .word{ font-weight:600; color:var(--teal); }
+  .term .ex{ color:var(--text-dim); }
+  .term code{ background:var(--surface-2); }
+
+  /* ============ Callouts / cards ============ */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin-bottom:1.3em;
+    box-shadow:var(--shadow);
+  }
+  .card h3{ margin-top:0; }
+  .bad-tag, .good-tag{
+    display:inline-block;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:0.15em 0.6em;
+    border-radius:20px;
+    margin-bottom:0.7em;
+  }
+  .bad-tag{ background:var(--rust-soft); color:var(--rust); }
+  .good-tag{ background:var(--teal-soft); color:var(--teal); }
+  .consequence-list li::marker{ color:var(--rust); }
+  .consequence-list{ background:var(--rust-soft); padding:1em 1.2em 1em 2.1em; border-radius:8px; margin-bottom:1.1em; }
+  .consequence-list li{ color:var(--text); }
+
+  /* ============ Quiz ============ */
+  .quiz{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin:1.6em 0;
+  }
+  .quiz .q-label{ color:var(--gold); font-weight:600; font-size:0.85rem; margin-bottom:0.4em; }
+  .quiz .q-prompt{ font-weight:600; margin-bottom:1em; }
+  .quiz .options{ display:flex; flex-direction:column; gap:0.55em; margin-bottom:0.8em; }
+  .quiz .option{
+    text-align:left;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0.7em 1em;
+    font-family:var(--font-ui);
+    font-size:0.93rem;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .quiz .option:hover:not(:disabled){ border-color:var(--teal); }
+  .quiz .option:disabled{ cursor:default; }
+  .quiz .option.is-correct{ border-color:var(--teal); background:var(--teal-soft); }
+  .quiz .option.is-incorrect{ border-color:var(--rust); background:var(--rust-soft); }
+  .quiz .verdict{ font-weight:600; margin-bottom:0.4em; display:none; }
+  .quiz .verdict.good{ color:var(--teal); display:block; }
+  .quiz .verdict.bad{ color:var(--rust); display:block; }
+  .quiz .explain{ display:none; font-size:0.92rem; color:var(--text-dim); background:var(--surface-2); padding:0.9em 1em; border-radius:8px; }
+
+  /* ============ Details / reveal ============ */
+  details.reveal{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:0.2em 1.4em;
+    margin:1.2em 0;
+  }
+  details.reveal summary{
+    cursor:pointer;
+    padding:0.9em 0;
+    font-weight:600;
+    color:var(--gold);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:0.5em;
+  }
+  details.reveal summary::-webkit-details-marker{ display:none; }
+  details.reveal summary::before{
+    content:"▸";
+    display:inline-block;
+    transition:transform 0.15s;
+    color:var(--gold);
+  }
+  details.reveal[open] summary::before{ transform:rotate(90deg); }
+  details.reveal .reveal-body{ padding:0 0 1.1em 0; border-top:1px solid var(--border); margin-top:0.2em; padding-top:1em; }
+
+  /* ============ Diagram ============ */
+  .diagram-wrap{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.2rem;
+    margin-bottom:1.3em;
+    overflow-x:auto;
+  }
+  .uml-box{ fill:var(--surface-2); stroke:var(--border); stroke-width:1.2; }
+  .uml-box.ctx{ stroke:var(--gold); }
+  .uml-box.iface{ stroke:var(--teal); }
+  .uml-text{ fill:var(--text); font-family:var(--font-code); font-size:12px; }
+  .uml-title{ fill:var(--text); font-family:var(--font-ui); font-weight:600; font-size:13px; }
+  .uml-stereotype{ fill:var(--text-dim); font-family:var(--font-ui); font-size:11px; font-style:italic; }
+  .uml-line{ stroke:var(--text-dim); stroke-width:1.3; fill:none; }
+  .uml-line.dashed{ stroke-dasharray:5,4; }
+  .uml-line.holds{ stroke:var(--gold); stroke-width:1.4; }
+  .uml-arrow{ fill:var(--text-dim); }
+  .uml-diamond{ fill:var(--gold); }
+  .uml-label{ fill:var(--gold); font-family:var(--font-ui); font-size:11px; font-weight:600; font-style:italic; }
+
+  /* ============ Domain example grid ============ */
+  .domain-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  @media (max-width:760px){ .domain-grid{ grid-template-columns:1fr; } }
+  .domain-card h4{ color:var(--teal); font-size:0.95rem; margin-bottom:0.5em; }
+
+  /* ============ Comparison table ============ */
+  .compare{ width:100%; border-collapse:collapse; margin-bottom:1em; font-size:0.92rem; }
+  .compare th, .compare td{ border:1px solid var(--border); padding:0.7em 0.9em; text-align:left; vertical-align:top; }
+  .compare th{ background:var(--surface-2); font-weight:600; }
+  .rule-line{
+    background:var(--gold-soft);
+    border-left:3px solid var(--gold);
+    padding:0.8em 1.1em;
+    border-radius:6px;
+    font-size:0.93rem;
+  }
+
+  /* ============ Cheat sheet ============ */
+  .cheat{
+    background:var(--surface);
+    border:1px solid var(--teal);
+    border-radius:12px;
+    padding:1.6em 1.8em;
+  }
+  .cheat dt{ color:var(--teal); font-weight:600; font-size:0.85rem; margin-top:0.9em; }
+  .cheat dt:first-child{ margin-top:0; }
+  .cheat dd{ margin:0.2em 0 0 0; }
+
+  .exercise-box{
+    background:var(--gold-soft);
+    border:1px solid var(--gold);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+  }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:2rem 3rem 3rem 3rem;
+    color:var(--text-dim);
+    font-size:0.85rem;
+    border-top:1px solid var(--border);
+  }
+  @media (max-width: 980px){ footer{ padding:2rem 1.2rem 3rem 1.2rem; } }
+
+  .also-note{
+    background:var(--surface-2);
+    border-radius:8px;
+    padding:0.9em 1.1em;
+    font-size:0.9rem;
+    color:var(--text-dim);
+    margin-bottom:1em;
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav" id="topnav" aria-label="Section navigation"></nav>
+
+<div class="shell">
+  <nav class="rail" aria-label="Lesson sections">
+    <div class="rail-title">Observer</div>
+    <ol id="railList"></ol>
+  </nav>
+
+  <main>
+    <header class="hero" id="s-hero">
+      <div class="kicker">Design pattern · Observer</div>
+      <h1>Observer</h1>
+      <p class="sub">You already know Strategy, Factory Method, Adapter, and Decorator — patterns about one
+      object's behavior or shape. Observer is about something else: how does one object announce "something
+      changed" to a group of other objects, without knowing in advance how many there are or what they do?
+      Pick a subscriber list below to see it before we name it.</p>
+
+      <div class="switcher">
+        <div class="switcher-buttons" role="group" aria-label="Choose who's subscribed">
+          <button class="provider-btn active" data-provider="email" data-line="tracker.attach(EmailNotifier(&quot;a@b.com&quot;))" data-desc="Only EmailNotifier is subscribed. set_status only ever reaches one place.">
+            <span class="dot"></span> Email only
+          </button>
+          <button class="provider-btn" data-provider="both" data-line="tracker.attach(EmailNotifier(&quot;a@b.com&quot;))\ntracker.attach(SMSNotifier(&quot;+353-000&quot;))" data-desc="Two observers attached. The exact same set_status call now reaches both, with no change to OrderTracker's own code.">
+            <span class="dot"></span> Email + SMS
+          </button>
+          <button class="provider-btn" data-provider="all" data-line="tracker.attach(EmailNotifier(&quot;a@b.com&quot;))\ntracker.attach(SMSNotifier(&quot;+353-000&quot;))\ntracker.attach(WarehouseSystem())" data-desc="Three observers attached. OrderTracker still has no idea any of them exist by name.">
+            <span class="dot"></span> Email + SMS + Warehouse
+          </button>
+        </div>
+        <div class="switcher-demo">
+          <div class="line1">order_service.py — the code that changes an order's status</div>
+          <div class="line2"><span id="swStrategy">tracker.attach(EmailNotifier("a@b.com"))</span><br>tracker.set_status(<span class="st">"shipped"</span>)</div>
+          <div class="switcher-note" id="swNote">Only EmailNotifier is subscribed. set_status only ever reaches one place.</div>
+        </div>
+      </div>
+      <p class="switcher-note" style="margin-top:1.1em;">Notice what <strong>doesn't</strong> change: <code>tracker.set_status("shipped")</code>.
+      Whoever is subscribed at that moment gets told — one observer, three observers, it's the same call either
+      way. That's Observer.</p>
+    </header>
+
+    <!-- ================= 1. THE PROBLEM ================= -->
+    <section id="s-problem">
+      <p class="eyebrow">1 · The problem</p>
+      <h2>An order tracker that several unrelated systems need to react to</h2>
+      <p>You're building the part of an e-commerce backend that tracks an order's status — placed, shipped,
+      delivered, cancelled. The moment that status changes, several completely separate systems need to react:
+      email the customer, text the customer, and tell the warehouse to update its shelves. More consumers are
+      already planned — an analytics system that logs every status change for reporting.</p>
+
+      <div class="term">
+        <span class="word">Coupling</span> — how much one piece of code depends on the specific details of
+        another piece of code. <span class="ex">Example: code that constructs and calls <code>EmailService</code>,
+        <code>SMSService</code>, and <code>WarehouseService</code> by name is <em>tightly coupled</em> to all
+        three — add a fourth system, and that code has to change again.</span>
+      </div>
+
+      <p>Here's the first version, written when only email, SMS, and the warehouse needed to know.</p>
+    </section>
+
+    <!-- ================= 2. BAD EXAMPLE ================= -->
+    <section id="s-bad">
+      <p class="eyebrow">2 · The naive version</p>
+      <h2>One class, hardwired to every interested system by name</h2>
+      <div class="card">
+        <span class="bad-tag">Works for three systems — breaks down as more show up</span>
+        <pre><code><span class="kw">class</span> <span class="fn">EmailService</span>:
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, message: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[email] order {order_id}: {message}"</span>)
+
+<span class="kw">class</span> <span class="fn">SMSService</span>:
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, message: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[sms] order {order_id}: {message}"</span>)
+
+<span class="kw">class</span> <span class="fn">WarehouseService</span>:
+    <span class="kw">def</span> <span class="fn">notify</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">if</span> status == <span class="st">"cancelled"</span>:
+            <span class="fn">print</span>(<span class="st">f"[warehouse] restocking items for order {order_id}"</span>)
+        <span class="kw">elif</span> status == <span class="st">"shipped"</span>:
+            <span class="fn">print</span>(<span class="st">f"[warehouse] marking order {order_id} as dispatched"</span>)
+
+
+<span class="kw">class</span> <span class="fn">BadOrderTracker</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._order_id = order_id
+        <span class="kw">self</span>._email = EmailService()
+        <span class="kw">self</span>._sms = SMSService()
+        <span class="kw">self</span>._warehouse = WarehouseService()
+
+    <span class="kw">def</span> <span class="fn">set_status</span>(<span class="kw">self</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._status = status
+        <span class="kw">self</span>._email.send(<span class="kw">self</span>._order_id, <span class="st">f"order now {status}"</span>)
+        <span class="kw">self</span>._sms.send(<span class="kw">self</span>._order_id, <span class="st">f"order now {status}"</span>)
+        <span class="kw">self</span>._warehouse.notify(<span class="kw">self</span>._order_id, status)</code></pre>
+
+        <p>Run once, it works fine:</p>
+        <pre><code>BadOrderTracker(<span class="st">"A-1001"</span>).set_status(<span class="st">"shipped"</span>)
+<span class="cm"># [email] order A-1001: order now shipped</span>
+<span class="cm"># [sms] order A-1001: order now shipped</span>
+<span class="cm"># [warehouse] marking order A-1001 as dispatched</span></code></pre>
+
+        <p>Here's exactly what this costs you:</p>
+        <ul class="consequence-list">
+          <li><code>BadOrderTracker.__init__</code> constructs <code>EmailService</code>, <code>SMSService</code>, and <code>WarehouseService</code> itself. You can't test <code>set_status</code> without all three real services existing — there's no way to swap in a fake for just one of them.</li>
+          <li>Add the analytics system, and you have to open <code>BadOrderTracker.set_status</code> — code that's already written and already shipped — and add a fourth line, <code>self._analytics.log(...)</code>. Every new interested system is an edit to this method.</li>
+          <li><code>BadOrderTracker</code> now has four separate reasons to change: <code>EmailService</code> changes its method signature, <code>SMSService</code> does, <code>WarehouseService</code> does, or a new system needs wiring in. None of those are really about tracking order status — they're all about who happens to be listening.</li>
+          <li>You can't turn SMS off for test orders, or add a one-off observer just for a single order, without editing <code>BadOrderTracker</code> itself. Every order gets exactly the same fixed set of three systems notified, permanently.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= 3. TRANSFORM STEP BY STEP ================= -->
+    <section id="s-transform">
+      <p class="eyebrow">3 · Building the fix, one step at a time</p>
+      <h2>From hardwired services to a subscriber list</h2>
+
+      <h3>Step 1 — inject the list, but keep it a mixed bag</h3>
+      <p>The smallest useful move: stop constructing the three services inside <code>__init__</code>, and accept
+      them from outside as a list instead.</p>
+      <pre><code><span class="kw">class</span> <span class="fn">OrderTrackerListVersion</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, watchers: <span class="tp">list</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._order_id = order_id
+        <span class="kw">self</span>._watchers = watchers
+
+    <span class="kw">def</span> <span class="fn">set_status</span>(<span class="kw">self</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._status = status
+        <span class="kw">for</span> watcher <span class="kw">in</span> <span class="kw">self</span>._watchers:
+            <span class="kw">if</span> <span class="fn">isinstance</span>(watcher, WarehouseService):
+                watcher.notify(<span class="kw">self</span>._order_id, status)
+            <span class="kw">else</span>:
+                watcher.send(<span class="kw">self</span>._order_id, <span class="st">f"order now {status}"</span>)</code></pre>
+          <pre><code>OrderTrackerListVersion(<span class="st">"A-1001"</span>, [EmailService(), SMSService(), WarehouseService()]).set_status(<span class="st">"shipped"</span>)
+<span class="cm"># [email] order A-1001: order now shipped</span>
+<span class="cm"># [sms] order A-1001: order now shipped</span>
+<span class="cm"># [warehouse] marking order A-1001 as dispatched</span></code></pre>
+      <p>This does remove the hardcoding — the call site now decides which watchers to pass in, not
+      <code>OrderTrackerListVersion</code>. But look at <code>set_status</code>: it still has to check
+      <code>isinstance(watcher, WarehouseService)</code>, because <code>EmailService.send</code>,
+      <code>SMSService.send</code>, and <code>WarehouseService.notify</code> don't share a method name.
+      Add the analytics system with its own method, <code>log_event</code>, and you're back to editing this
+      <code>for</code> loop to add another branch — the exact "editing existing code" problem from Section 2,
+      just moved into one loop instead of three separate lines. Observer fixes this by giving every watcher the
+      same method name, so the loop never needs to know which concrete class it's holding.</p>
+
+      <h3>Step 2 — give every observer the same interface</h3>
+      <div class="term">
+        <span class="word">Interface</span> — a contract that says which methods a class must provide, without
+        saying how they work. <span class="ex">Example: "anything that claims to be an order observer must have
+        an <code>update(order_id, status)</code> method" — that's the whole contract.</span>
+      </div>
+      <div class="term">
+        <span class="word">Observer</span> — in this pattern specifically, an object that implements a shared
+        interface so it can be notified when something it's watching changes.
+        <span class="ex">Example: <code>EmailNotifier</code> below is an observer — it implements
+        <code>update</code>, so anything that holds a list of observers can call it without knowing it's
+        specifically an <code>EmailNotifier</code>.</span>
+      </div>
+      <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="kw">class</span> <span class="fn">OrderObserver</span>(ABC):
+    <span class="cm">"""The contract every order observer must satisfy."""</span>
+
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="cm">"""React to an order's status changing."""</span>
+        ...
+
+
+<span class="kw">class</span> <span class="fn">EmailNotifier</span>(OrderObserver):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, address: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._address = address
+
+    <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[email] to {self._address}: order {order_id} is now {status}"</span>)
+
+
+<span class="kw">class</span> <span class="fn">SMSNotifier</span>(OrderObserver):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, phone: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._phone = phone
+
+    <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[sms] to {self._phone}: order {order_id} is now {status}"</span>)
+
+
+<span class="kw">class</span> <span class="fn">WarehouseSystem</span>(OrderObserver):
+    <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">if</span> status == <span class="st">"cancelled"</span>:
+            <span class="fn">print</span>(<span class="st">f"[warehouse] restocking items for order {order_id}"</span>)
+        <span class="kw">elif</span> status == <span class="st">"shipped"</span>:
+            <span class="fn">print</span>(<span class="st">f"[warehouse] marking order {order_id} as dispatched"</span>)</code></pre>
+
+      <h3>Step 3 — the subject holds observers and can add or remove them at any time</h3>
+      <div class="term">
+        <span class="word">Subject</span> — in this pattern specifically, the object being watched. It keeps a
+        list of observers and calls each one's <code>update</code> method whenever its own state changes.
+        <span class="ex">Example: <code>OrderTracker</code> below is the subject — it never imports or mentions
+        <code>EmailNotifier</code> by name, it only knows it's holding a list of <code>OrderObserver</code>.</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="fn">OrderTracker</span>:
+    <span class="cm">"""Subject: holds observers and notifies them when status changes."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._order_id = order_id
+        <span class="kw">self</span>._status = <span class="st">"placed"</span>
+        <span class="kw">self</span>._observers: <span class="tp">list</span>[OrderObserver] = []
+
+    <span class="kw">def</span> <span class="fn">attach</span>(<span class="kw">self</span>, observer: OrderObserver) -> <span class="tp">None</span>:
+        <span class="cm">"""Start notifying this observer."""</span>
+        <span class="kw">self</span>._observers.append(observer)
+
+    <span class="kw">def</span> <span class="fn">detach</span>(<span class="kw">self</span>, observer: OrderObserver) -> <span class="tp">None</span>:
+        <span class="cm">"""Stop notifying this observer."""</span>
+        <span class="kw">self</span>._observers.remove(observer)
+
+    <span class="kw">def</span> <span class="fn">set_status</span>(<span class="kw">self</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._status = status
+        <span class="kw">self</span>._notify()
+
+    <span class="kw">def</span> <span class="fn">_notify</span>(<span class="kw">self</span>) -> <span class="tp">None</span>:
+        <span class="kw">for</span> observer <span class="kw">in</span> <span class="kw">self</span>._observers:
+            observer.update(<span class="kw">self</span>._order_id, <span class="kw">self</span>._status)
+
+
+<span class="cm"># usage</span>
+tracker = OrderTracker(<span class="st">"A-1001"</span>)
+tracker.attach(EmailNotifier(<span class="st">"a@b.com"</span>))
+tracker.attach(SMSNotifier(<span class="st">"+353-000"</span>))
+tracker.attach(WarehouseSystem())
+
+tracker.set_status(<span class="st">"shipped"</span>)</code></pre>
+      <pre><code>[email] to a@b.com: order A-1001 is now shipped
+[sms] to +353-000: order A-1001 is now shipped
+[warehouse] marking order A-1001 as dispatched</code></pre>
+      <p><code>OrderTracker.set_status</code> never mentions <code>EmailNotifier</code>, <code>SMSNotifier</code>,
+      or <code>WarehouseSystem</code> — it calls <code>self._notify()</code>, which loops over
+      <code>self._observers</code> and calls <code>observer.update(...)</code> on each. Adding the analytics
+      system next quarter means writing one new class, <code>AnalyticsLogger(OrderObserver)</code>, and calling
+      <code>tracker.attach(AnalyticsLogger())</code> wherever it's needed. <code>OrderTracker</code> itself never
+      changes.</p>
+    </section>
+
+    <!-- Checkpoint 1 -->
+    <section>
+      <div class="quiz" data-correct="c">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Your team adds an analytics system that needs to log every order status change. With the design above, what do you write?</div>
+        <div class="options">
+          <button class="option" data-id="a">Edit <code>OrderTracker.set_status</code> to add a fourth line calling the analytics system directly.</button>
+          <button class="option" data-id="b">Edit <code>OrderObserver</code> to add a second abstract method, <code>log_event</code>, just for analytics.</button>
+          <button class="option" data-id="c">Write one new class, <code>AnalyticsLogger(OrderObserver)</code>, implementing <code>update</code>. Then call <code>tracker.attach(AnalyticsLogger())</code> wherever it's needed.</button>
+          <button class="option" data-id="d">Nothing — any object attached to <code>OrderTracker</code> is automatically logged for analytics.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite. <code>set_status</code> only calls <code>self._notify()</code>, which loops over <code>self._observers</code> — it has no per-observer lines to edit. If you're editing this method for a new observer, the design has slid back toward <code>BadOrderTracker</code>.</div>
+        <div class="explain" data-for="b">Not quite. <code>OrderObserver</code> defines one shared method, <code>update</code>, that every observer implements in its own way. A second, analytics-only method would force <code>EmailNotifier</code>, <code>SMSNotifier</code>, and <code>WarehouseSystem</code> to all implement something they don't need.</div>
+        <div class="explain" data-for="c">Correct. That's the entire point of the shared interface: any class implementing <code>update(order_id, status) -> None</code> can be attached to any <code>OrderTracker</code>, and <code>_notify</code> will call it exactly like every other observer — no changes to <code>OrderTracker</code> required.</div>
+        <div class="explain" data-for="d">Not quite — nothing here is automatic. <code>OrderTracker</code> only notifies observers that were explicitly passed to <code>attach</code>; nothing gets attached on its own.</div>
+      </div>
+    </section>
+
+    <!-- ================= 4. DIAGRAM ================= -->
+    <section id="s-diagram">
+      <p class="eyebrow">4 · The shape of it</p>
+      <h2>One subject, any number of observers</h2>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 940 460" width="100%" style="max-width:880px; display:block; margin:0 auto;" role="img" aria-label="UML-style diagram: OrderTracker (subject) holds a list of OrderObserver and notifies them; EmailNotifier, SMSNotifier and WarehouseSystem each implement OrderObserver">
+          <!-- OrderObserver interface -->
+          <rect class="uml-box iface" x="350" y="20" width="240" height="70" rx="6"></rect>
+          <text class="uml-stereotype" x="470" y="40" text-anchor="middle">observer interface</text>
+          <text class="uml-title" x="470" y="60" text-anchor="middle">OrderObserver</text>
+          <text class="uml-text" x="470" y="80" text-anchor="middle">+ update(order_id, status)</text>
+
+          <!-- OrderTracker subject -->
+          <rect class="uml-box ctx" x="40" y="190" width="250" height="110" rx="6"></rect>
+          <text class="uml-stereotype" x="165" y="210" text-anchor="middle">subject</text>
+          <text class="uml-title" x="165" y="230" text-anchor="middle">OrderTracker</text>
+          <text class="uml-text" x="165" y="250" text-anchor="middle">- _observers: list[OrderObserver]</text>
+          <text class="uml-text" x="165" y="266" text-anchor="middle">+ attach(observer)</text>
+          <text class="uml-text" x="165" y="282" text-anchor="middle">+ detach(observer); + set_status(status)</text>
+
+          <!-- notifies: OrderTracker -> OrderObserver (composition, one-to-many) -->
+          <path class="uml-line holds" d="M290,225 L340,225 L340,55 L350,55"></path>
+          <polygon class="uml-diamond" points="290,225 302,219 302,231"></polygon>
+          <text class="uml-label" x="352" y="140" text-anchor="start" transform="rotate(-90 352 140)">notifies (0..*)</text>
+
+          <!-- concrete observers -->
+          <rect class="uml-box" x="430" y="350" width="150" height="60" rx="6"></rect>
+          <text class="uml-title" x="505" y="375" text-anchor="middle">EmailNotifier</text>
+          <text class="uml-text" x="505" y="393" text-anchor="middle">+ update(order_id, status)</text>
+
+          <rect class="uml-box" x="600" y="350" width="150" height="60" rx="6"></rect>
+          <text class="uml-title" x="675" y="375" text-anchor="middle">SMSNotifier</text>
+          <text class="uml-text" x="675" y="393" text-anchor="middle">+ update(order_id, status)</text>
+
+          <rect class="uml-box" x="770" y="350" width="150" height="60" rx="6"></rect>
+          <text class="uml-title" x="845" y="375" text-anchor="middle">WarehouseSystem</text>
+          <text class="uml-text" x="845" y="393" text-anchor="middle">+ update(order_id, status)</text>
+
+          <!-- implements (dashed) -->
+          <path class="uml-line dashed" d="M505,350 L505,300 L430,300 L430,90"></path>
+          <polygon class="uml-arrow" points="430,90 424,102 436,102"></polygon>
+
+          <path class="uml-line dashed" d="M675,350 L675,120 L470,120 L470,90"></path>
+          <polygon class="uml-arrow" points="470,90 464,102 476,102"></polygon>
+
+          <path class="uml-line dashed" d="M845,350 L845,300 L510,300 L510,90"></path>
+          <polygon class="uml-arrow" points="510,90 504,102 516,102"></polygon>
+        </svg>
+        <p style="text-align:center; color:var(--text-dim); font-size:0.85rem; margin:0.6em 0 0 0;">
+          Dashed line + arrow = <em>implements the interface</em>. Solid gold line + diamond = <em>holds
+          references to, and notifies</em>. The <code>0..*</code> matters: <code>OrderTracker</code> can hold
+          zero, one, or many observers, and that number can change at any time via <code>attach</code>/<code>detach</code>.
+        </p>
+      </div>
+      <p><code>OrderTracker</code> never points at <code>EmailNotifier</code>, <code>SMSNotifier</code>, or
+      <code>WarehouseSystem</code> specifically — only at <code>OrderObserver</code>, and only through a list
+      whose length can change while the program is running. That's different from every pattern you've seen so
+      far: Strategy and Factory Method both dealt with exactly one held reference; Observer deals with a
+      variable-length collection of them.</p>
+    </section>
+
+    <!-- Checkpoint 2 -->
+    <section>
+      <div class="quiz" data-correct="b">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Why does <code>OrderTracker</code> store <code>self._observers</code> as <code>list[OrderObserver]</code> rather than, say, <code>self._email = EmailNotifier(...)</code>, <code>self._sms = SMSNotifier(...)</code> as separate named fields?</div>
+        <div class="options">
+          <button class="option" data-id="a">Named fields would use more memory than a list, which matters at production scale.</button>
+          <button class="option" data-id="b">A list lets the number of observers change at runtime — zero, one, or many — without <code>OrderTracker</code>'s own class definition changing. Named fields would fix the count and the types in advance, straight back into the Section 2 problem.</button>
+          <button class="option" data-id="c">Python requires <code>abstractmethod</code>-based interfaces to be stored in a list, never as individual named attributes.</button>
+          <button class="option" data-id="d">It's purely a style choice — named fields would work identically here.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite — memory isn't the reason here. A handful of object references costs essentially nothing either way; the real issue is what each design lets you do at runtime.</div>
+        <div class="explain" data-for="b">Correct. <code>self._email = EmailNotifier(...)</code> as a named field means <code>OrderTracker</code> always has exactly one email observer, hardcoded into its own definition — exactly what Section 2's <code>BadOrderTracker</code> did. A list lets <code>attach</code> and <code>detach</code> change the membership freely, including attaching two <code>EmailNotifier</code> instances or zero of them, with no change to <code>OrderTracker</code> itself.</div>
+        <div class="explain" data-for="c">Not quite — that's not a Python rule. You could technically store observers in named fields; the reason to use a list is about flexibility, not a language requirement.</div>
+        <div class="explain" data-for="d">Not quite. Named fields would silently reintroduce the fixed-count, fixed-type problem from <code>BadOrderTracker</code> — you'd be back to editing <code>OrderTracker</code>'s own definition every time the set of observers needed to change.</div>
+      </div>
+    </section>
+
+    <!-- ================= 5. PREDICT THE OUTPUT ================= -->
+    <section id="s-predict">
+      <p class="eyebrow">5 · Predict the output</p>
+      <h2>What does this print? (Subscriptions change at runtime)</h2>
+      <pre><code>t2 = OrderTracker(<span class="st">"A-2002"</span>)
+email_obs = EmailNotifier(<span class="st">"c@d.com"</span>)
+sms_obs = SMSNotifier(<span class="st">"+353-111"</span>)
+
+t2.attach(email_obs)
+t2.attach(sms_obs)
+t2.set_status(<span class="st">"shipped"</span>)
+
+t2.detach(sms_obs)
+t2.set_status(<span class="st">"delivered"</span>)</code></pre>
+      <p>Write down what the two <code>set_status</code> calls print, in order, before opening the answer. Pay
+      attention to what <code>t2.detach(sms_obs)</code> actually does to <code>t2._observers</code> before the
+      second call.</p>
+      <details class="reveal">
+        <summary>Reveal answer</summary>
+        <div class="reveal-body">
+          <pre><code>[email] to c@d.com: order A-2002 is now shipped
+[sms] to +353-111: order A-2002 is now shipped
+[email] to c@d.com: order A-2002 is now delivered</code></pre>
+          <p>The first <code>set_status("shipped")</code> notifies both observers, because both are still in
+          <code>t2._observers</code> at that point. <code>t2.detach(sms_obs)</code> then calls
+          <code>self._observers.remove(sms_obs)</code>, which removes exactly that one object from the list —
+          <code>email_obs</code> is untouched. So the second <code>set_status("delivered")</code> only reaches
+          <code>email_obs</code>; <code>sms_obs</code> is simply no longer in the list being looped over in
+          <code>_notify</code>. Nothing about <code>OrderTracker</code>'s code changed between the two calls —
+          only the contents of <code>self._observers</code> did.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 6. OTHER DOMAINS ================= -->
+    <section id="s-domains">
+      <p class="eyebrow">6 · Same shape, different domain</p>
+      <h2>This isn't an order-tracking-specific trick</h2>
+      <p>Observer shows up anywhere one object's state change needs to reach an open-ended group of interested
+      parties. Two more, from unrelated domains:</p>
+      <div class="domain-grid">
+        <div class="card domain-card">
+          <h4>UI — button click listeners</h4>
+          <p>A UI button doesn't know or care what happens when it's clicked — an analytics system wants to
+          record the click, a sound system wants to play a click noise, and neither should be hardcoded into the
+          button itself.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">ClickListener</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_click</span>(<span class="kw">self</span>, button_id: <span class="tp">str</span>) -> <span class="tp">None</span>: ...
+
+<span class="kw">class</span> <span class="fn">AnalyticsClickListener</span>(ClickListener):
+    <span class="kw">def</span> <span class="fn">on_click</span>(<span class="kw">self</span>, button_id: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[analytics] click recorded: {button_id}"</span>)
+
+<span class="kw">class</span> <span class="fn">Button</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, button_id: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._button_id = button_id
+        <span class="kw">self</span>._listeners: <span class="tp">list</span>[ClickListener] = []
+
+    <span class="kw">def</span> <span class="fn">add_listener</span>(<span class="kw">self</span>, listener: ClickListener) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._listeners.append(listener)
+
+    <span class="kw">def</span> <span class="fn">click</span>(<span class="kw">self</span>) -> <span class="tp">None</span>:
+        <span class="kw">for</span> listener <span class="kw">in</span> <span class="kw">self</span>._listeners:
+            listener.on_click(<span class="kw">self</span>._button_id)</code></pre>
+          <pre><code>button = Button(<span class="st">"checkout-btn"</span>)
+button.add_listener(AnalyticsClickListener())
+button.click()  <span class="cm"># [analytics] click recorded: checkout-btn</span></code></pre>
+          <p>Same shape: <code>Button.click</code> is <code>OrderTracker.set_status</code> in disguise — one
+          state change, notified out to however many listeners happen to be attached.</p>
+        </div>
+        <div class="domain-card card">
+          <h4>Finance — a stock price ticker</h4>
+          <p>A price feed updates constantly. Several unrelated things need to react to every update: a UI
+          widget showing the current price, and an alert engine watching for a threshold to be crossed.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">PriceObserver</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_price_change</span>(<span class="kw">self</span>, symbol: <span class="tp">str</span>, price: <span class="tp">float</span>) -> <span class="tp">None</span>: ...
+
+<span class="kw">class</span> <span class="fn">PriceAlertEngine</span>(PriceObserver):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, threshold: <span class="tp">float</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._threshold = threshold
+
+    <span class="kw">def</span> <span class="fn">on_price_change</span>(<span class="kw">self</span>, symbol: <span class="tp">str</span>, price: <span class="tp">float</span>) -> <span class="tp">None</span>:
+        <span class="kw">if</span> price >= <span class="kw">self</span>._threshold:
+            <span class="fn">print</span>(<span class="st">f"[alert] {symbol} crossed ${self._threshold:.2f}! now ${price:.2f}"</span>)
+
+<span class="kw">class</span> <span class="fn">StockTicker</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, symbol: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._symbol = symbol
+        <span class="kw">self</span>._observers: <span class="tp">list</span>[PriceObserver] = []
+
+    <span class="kw">def</span> <span class="fn">subscribe</span>(<span class="kw">self</span>, observer: PriceObserver) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._observers.append(observer)
+
+    <span class="kw">def</span> <span class="fn">set_price</span>(<span class="kw">self</span>, price: <span class="tp">float</span>) -> <span class="tp">None</span>:
+        <span class="kw">for</span> observer <span class="kw">in</span> <span class="kw">self</span>._observers:
+            observer.on_price_change(<span class="kw">self</span>._symbol, price)</code></pre>
+          <pre><code>ticker = StockTicker(<span class="st">"ACME"</span>)
+ticker.subscribe(PriceAlertEngine(threshold=<span class="hl">100.0</span>))
+ticker.set_price(<span class="hl">95.0</span>)    <span class="cm"># nothing — below threshold</span>
+ticker.set_price(<span class="hl">101.5</span>)   <span class="cm"># [alert] ACME crossed $100.00! now $101.50</span></code></pre>
+          <p><code>StockTicker.set_price</code> doesn't know or care whether zero, one, or ten things are
+          subscribed — same as <code>OrderTracker.set_status</code>.</p>
+        </div>
+      </div>
+
+      <div class="also-note">
+        Three domains, one shape: a subject (<code>OrderTracker</code>, <code>Button</code>,
+        <code>StockTicker</code>) holds a list of some observer interface, and one method loops over that list
+        and calls the same method name on each — never knowing or caring how many observers there are, or what
+        concrete classes they are.
+      </div>
+
+      <h3>You've probably already used this without naming it</h3>
+      <p>Python's own <code>logging</code> module is built on Observer. A <code>Logger</code> can have several
+      <code>Handler</code> objects attached, and every log call notifies all of them:</p>
+      <pre><code><span class="kw">import</span> logging
+
+logger = logging.getLogger(<span class="st">"orders"</span>)
+logger.addHandler(email_alert_handler)
+logger.addHandler(file_handler)
+
+logger.info(<span class="st">"order A-1001 shipped"</span>)
+<span class="cm"># both email_alert_handler and file_handler receive this record</span></code></pre>
+      <p><code>addHandler</code> is exactly <code>attach</code>. Internally, <code>Logger</code> keeps a list of
+      handler objects and loops over it, calling <code>handle(record)</code> on each one — the same shape as
+      <code>OrderTracker._notify</code> calling <code>update(...)</code> on each observer. You can attach as many
+      handlers as you want, and <code>logger.info(...)</code> never needs to know how many there are.</p>
+    </section>
+
+    <!-- Checkpoint 3 -->
+    <section>
+      <div class="quiz" data-correct="c">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">In <code>logging</code>, is <code>Logger.addHandler(handler)</code> playing the role of the subject's <code>attach</code>, or the observer's <code>update</code>?</div>
+        <div class="options">
+          <button class="option" data-id="a"><code>update</code> — it's called every time a log message is emitted.</button>
+          <button class="option" data-id="b">Neither — <code>logging</code> doesn't actually follow Observer, it just looks similar.</button>
+          <button class="option" data-id="c"><code>attach</code> — it registers a handler into the logger's internal list, the same way <code>OrderTracker.attach</code> registers an observer into <code>self._observers</code>, before any actual logging happens.</button>
+          <button class="option" data-id="d">Both at once — <code>addHandler</code> registers the handler and immediately calls it with the current log state.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite. <code>addHandler</code> runs once, at setup time, to register the handler — it doesn't run every time a message is logged. The method that runs per log message is the handler's own <code>emit</code>, which is the actual <code>update</code> equivalent.</div>
+        <div class="explain" data-for="b">Not quite — it genuinely matches the shape: a list of registered listeners, a registration method, and a loop that calls each one when the watched state changes (a new log record). The names differ, but the mechanism is the same pattern.</div>
+        <div class="explain" data-for="c">Correct. <code>addHandler</code> only adds the handler to <code>Logger.handlers</code>, a list — it does not call the handler. The handler only gets called later, once per log message, exactly like <code>OrderTracker.attach</code> only registers an observer without notifying it immediately.</div>
+        <div class="explain" data-for="d">Not quite. <code>addHandler</code> only registers — it doesn't trigger anything immediately. The handler's own logic only runs on a future log call, the same separation <code>attach</code> and <code>update</code> have in this lesson's <code>OrderTracker</code>.</div>
+      </div>
+    </section>
+
+    <!-- ================= 7. SPOT THE BUG ================= -->
+    <section id="s-bug">
+      <p class="eyebrow">7 · Spot the smell</p>
+      <h2>This observer unsubscribes itself — but something's wrong</h2>
+      <pre><code><span class="kw">class</span> <span class="fn">SelfDetachingObserver</span>(OrderObserver):
+    <span class="cm">"""Watches exactly one status change, then unsubscribes."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, tracker: OrderTracker, name: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._tracker = tracker
+        <span class="kw">self</span>._name = name
+
+    <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>, status: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[{self._name}] saw order {order_id} -> {status}, unsubscribing now"</span>)
+        <span class="kw">self</span>._tracker.detach(<span class="kw">self</span>)
+
+t3 = OrderTracker(<span class="st">"A-3003"</span>)
+obs_a = SelfDetachingObserver(t3, <span class="st">"A"</span>)
+obs_b = EmailNotifier(<span class="st">"watcher-b@example.com"</span>)
+obs_c = SelfDetachingObserver(t3, <span class="st">"C"</span>)
+t3.attach(obs_a)
+t3.attach(obs_b)
+t3.attach(obs_c)
+
+t3.set_status(<span class="st">"shipped"</span>)</code></pre>
+      <p>Three observers are attached, in order: <code>obs_a</code>, <code>obs_b</code>, <code>obs_c</code>.
+      <code>obs_b</code> is a normal <code>EmailNotifier</code> that never unsubscribes. Before opening the
+      answer, predict: does <code>obs_b</code>'s <code>update</code> get called during this <code>set_status</code>
+      call?</p>
+      <details class="reveal">
+        <summary>Reveal explanation</summary>
+        <div class="reveal-body">
+          <pre><code>[A] saw order A-3003 -> shipped, unsubscribing now
+[C] saw order A-3003 -> shipped, unsubscribing now</code></pre>
+          <p><code>obs_b</code> is never called. Its <code>update</code> — the line that would print
+          <code>[email] to watcher-b@example.com: ...</code> — silently never runs, even though it was attached
+          and never asked to be removed.</p>
+          <p>Here's why. <code>OrderTracker._notify</code> does <code>for observer in self._observers:</code>,
+          which walks the list by position: index 0, then 1, then 2. When <code>obs_a</code> (at index 0) calls
+          <code>self._tracker.detach(self)</code> from inside its own <code>update</code>, that runs
+          <code>self._observers.remove(obs_a)</code> — <em>while the loop is still in progress</em>. The list
+          shrinks from <code>[obs_a, obs_b, obs_c]</code> to <code>[obs_b, obs_c]</code>, and everything shifts
+          down one position: <code>obs_b</code> is now at index 0, <code>obs_c</code> is now at index 1. But the
+          loop's internal position counter has already moved on to index 1 — which, after the shift, now points
+          at <code>obs_c</code>, not <code>obs_b</code>. <code>obs_b</code> just got skipped, silently, with no
+          error at all.</p>
+          <p>This is a real, common bug with Observer: mutating the list you're currently iterating over. The
+          fix is to iterate over a copy, so removals during the loop don't affect which positions the loop still
+          has left to visit: <code>for observer in list(self._observers):</code> — that one change makes
+          <code>_notify</code> loop over a separate, frozen copy of the list, so <code>obs_b</code> would be
+          reached correctly even while <code>obs_a</code> and <code>obs_c</code> modify the real
+          <code>self._observers</code> underneath it.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 8. WHEN NOT TO USE ================= -->
+    <section id="s-tradeoffs">
+      <p class="eyebrow">8 · Trade-offs</p>
+      <h2>When not to reach for Observer</h2>
+      <p>Observer costs you an interface, an attach/detach/notify mechanism, and a layer of indirection between
+      "something happened" and "code that handles it" — harder to trace than a direct function call, since
+      finding out who reacts to a change means finding every <code>attach</code> call site, not just reading one
+      method top to bottom. That's worth it once the number or identity of interested parties is genuinely
+      variable. It's not worth it when there's exactly one thing that will ever care.</p>
+      <div class="card">
+        <span class="bad-tag">Over-engineered</span>
+        <pre><code><span class="kw">class</span> <span class="fn">SingleUseObserver</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">notify</span>(<span class="kw">self</span>, value: <span class="tp">int</span>) -> <span class="tp">None</span>: ...
+
+<span class="kw">class</span> <span class="fn">OnlyLogger</span>(SingleUseObserver):
+    <span class="kw">def</span> <span class="fn">notify</span>(<span class="kw">self</span>, value: <span class="tp">int</span>) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[only-logger] value is {value}"</span>)
+
+<span class="kw">class</span> <span class="fn">Counter</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._observers: <span class="tp">list</span>[SingleUseObserver] = []
+        <span class="kw">self</span>._value = <span class="hl">0</span>
+
+    <span class="kw">def</span> <span class="fn">subscribe</span>(<span class="kw">self</span>, observer: SingleUseObserver) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._observers.append(observer)
+
+    <span class="kw">def</span> <span class="fn">increment</span>(<span class="kw">self</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._value += <span class="hl">1</span>
+        <span class="kw">for</span> o <span class="kw">in</span> <span class="kw">self</span>._observers:
+            o.notify(<span class="kw">self</span>._value)</code></pre>
+        <p>If <code>Counter</code> will only ever have exactly one thing watching it, forever, with no plan for a
+        second — this is an interface, a subscribe method, and a loop, all standing in for what a single
+        callback would say more plainly:</p>
+        <pre><code><span class="kw">class</span> <span class="fn">Counter</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, on_change) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._on_change = on_change
+        <span class="kw">self</span>._value = <span class="hl">0</span>
+
+    <span class="kw">def</span> <span class="fn">increment</span>(<span class="kw">self</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._value += <span class="hl">1</span>
+        <span class="kw">self</span>._on_change(<span class="kw">self</span>._value)</code></pre>
+        <p>Reach for Observer when the set of interested parties is genuinely variable — not when it's always
+        going to be exactly one, fixed thing.</p>
+      </div>
+
+      <h3>Observer vs. Publish/Subscribe — easy to mix up</h3>
+      <p>Both let one thing's change reach multiple listeners. The difference is <em>whether the subject knows
+      its observers directly</em>.</p>
+      <table class="compare">
+        <tr><th></th><th>Observer</th><th>Publish/Subscribe</th></tr>
+        <tr><td>Who holds the references</td><td>The subject holds direct references to its observers — <code>OrderTracker._observers</code> is a list of actual objects</td><td>Neither side holds the other — both talk only to a broker or message channel in between</td></tr>
+        <tr><td>Coupling</td><td>Subject and observer must at least agree on the observer interface, and usually live in the same process</td><td>Publisher and subscriber can be completely unaware of each other, even in different processes or services</td></tr>
+        <tr><td>Timing</td><td>Usually synchronous — <code>_notify</code> calls each observer immediately, one after another</td><td>Often asynchronous — a message sits in a queue until a subscriber is ready to read it</td></tr>
+      </table>
+      <div class="rule-line">One-line rule: if the notifier holds direct references to its listeners and calls them itself, it's
+      Observer. If there's a broker or channel in between and the two sides never reference each other directly,
+      it's Publish/Subscribe.</div>
+    </section>
+
+    <!-- ================= 9. PRACTICE ================= -->
+    <section id="s-practice">
+      <p class="eyebrow">9 · Cheat sheet &amp; practice</p>
+      <h2>Cheat sheet</h2>
+      <div class="cheat">
+        <dl>
+          <dt>Problem it solves</dt>
+          <dd>One object's state change needs to reach a variable number of other objects, without that object knowing in advance who they are or how many there are.</dd>
+          <dt>Core idea, in one sentence</dt>
+          <dd>Give every interested party the same interface, let the subject hold a list of them with methods to add or remove members at any time, and loop over that list calling the shared method whenever the subject's own state changes.</dd>
+          <dt>Trade-off</dt>
+          <dd>An interface, a registration mechanism, and a layer of indirection — following what reacts to a change means finding every <code>attach</code> call site, not reading one method top to bottom.</dd>
+          <dt>The smell that tells you to reach for it</dt>
+          <dd>A method that directly calls several unrelated systems by name every time it runs, and grows a new line every time another system needs to know.</dd>
+        </dl>
+      </div>
+
+      <h2 style="margin-top:2rem;">Your turn</h2>
+      <div class="exercise-box">
+        <p><strong>Scenario:</strong> you're building a <code>Thermostat</code> class for a smart home system. It
+        tracks the current temperature and updates whenever a new reading comes in. Several unrelated things need
+        to react to every temperature change: a <code>DisplayPanel</code> that shows the current reading on a
+        screen, and a <code>FanController</code> that turns a fan on when the temperature crosses a threshold and
+        off when it drops back below it. A <code>SafetyNotifier</code> that alerts the homeowner if the
+        temperature exceeds a dangerous limit is already planned for later.</p>
+        <p><strong>Task:</strong> apply Observer to this. Name the observer interface and the method it requires.
+        Name the subject class, and describe what fields and methods it needs — including how it lets something
+        subscribe and unsubscribe. Name at least two concrete observers, and describe what each one's implementation
+        of the shared method actually does. Then explain, in a sentence or two, what would go wrong if
+        <code>FanController</code> decided to unsubscribe itself from inside its own reaction to a temperature
+        reading — the same kind of situation you just saw with <code>SelfDetachingObserver</code>. You don't need
+        to write the implementation — just describe it clearly enough that you could code it from your own
+        description.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  Observer pattern lesson · built for system design / SWE interview prep.
+</footer>
+
+<script>
+(function(){
+  // ---------- Section registry for nav ----------
+  var sections = [
+    {id:'s-hero', label:'Start'},
+    {id:'s-problem', label:'The problem'},
+    {id:'s-bad', label:'Naive version'},
+    {id:'s-transform', label:'Building the fix'},
+    {id:'s-diagram', label:'Class diagram'},
+    {id:'s-predict', label:'Predict output'},
+    {id:'s-domains', label:'Other domains'},
+    {id:'s-bug', label:'Spot the smell'},
+    {id:'s-tradeoffs', label:'Trade-offs'},
+    {id:'s-practice', label:'Cheat sheet'}
+  ];
+
+  var railList = document.getElementById('railList');
+  var topnav = document.getElementById('topnav');
+
+  sections.forEach(function(s, i){
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.dataset.target = s.id;
+    var n = document.createElement('span');
+    n.className = 'n';
+    n.textContent = String(i + 1).padStart(2, '0');
+    a.appendChild(n);
+    a.appendChild(document.createTextNode(s.label));
+    li.appendChild(a);
+    railList.appendChild(li);
+
+    var ta = document.createElement('a');
+    ta.href = '#' + s.id;
+    ta.dataset.target = s.id;
+    ta.textContent = s.label;
+    topnav.appendChild(ta);
+  });
+
+  var allNavLinks = document.querySelectorAll('.rail a, .topnav a');
+
+  function setActive(id){
+    allNavLinks.forEach(function(a){
+      if (a.dataset.target === id) a.classList.add('active');
+      else a.classList.remove('active');
+    });
+  }
+
+  if ('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      var visible = entries.filter(function(e){ return e.isIntersecting; });
+      if (visible.length > 0){
+        visible.sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+        setActive(visible[0].target.id);
+      }
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(function(s){
+      var el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  }
+
+  // ---------- Hero subscriber switcher ----------
+  var swStrategy = document.getElementById('swStrategy');
+  var swNote = document.getElementById('swNote');
+  document.querySelectorAll('.provider-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.provider-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      swStrategy.textContent = btn.dataset.line.replace(/\\n/g, '\n');
+      swNote.innerHTML = btn.dataset.desc.replace(/`([^`]+)`/g, '<code>$1</code>');
+    });
+  });
+
+  // ---------- Quiz logic ----------
+  document.querySelectorAll('.quiz').forEach(function(quiz){
+    var correctId = quiz.dataset.correct;
+    var verdictEl = quiz.querySelector('.verdict');
+
+    quiz.querySelectorAll('.option').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (quiz.dataset.answered === 'true') return;
+        quiz.dataset.answered = 'true';
+
+        quiz.querySelectorAll('.option').forEach(function(b){
+          b.disabled = true;
+          if (b.dataset.id === correctId) b.classList.add('is-correct');
+        });
+        if (btn.dataset.id !== correctId) btn.classList.add('is-incorrect');
+
+        quiz.querySelectorAll('.explain').forEach(function(e){ e.style.display = 'none'; });
+        var explanation = quiz.querySelector('.explain[data-for="' + btn.dataset.id + '"]');
+        if (explanation) explanation.style.display = 'block';
+
+        verdictEl.textContent = (btn.dataset.id === correctId) ? 'Correct.' : 'Not quite.';
+        verdictEl.className = 'verdict ' + ((btn.dataset.id === correctId) ? 'good' : 'bad');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

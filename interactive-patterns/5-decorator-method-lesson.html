@@ -1,0 +1,1228 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decorator — an interactive lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens — light (default) ============ */
+  :root{
+    --bg:#F3F4F7;
+    --surface:#FFFFFF;
+    --surface-2:#EAEBF0;
+    --text:#1B1E2A;
+    --text-dim:#5A5F72;
+    --border:#D8DAE2;
+    --teal:#177E70;
+    --teal-soft:#E4F2EF;
+    --rust:#AE3F27;
+    --rust-soft:#F6E7E2;
+    --gold:#95681A;
+    --gold-soft:#F5EDDC;
+    --code-bg:#1B1E2A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(20,22,30,0.06);
+    --focus: #2E6DE0;
+    --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161F;
+      --surface:#1C1F2B;
+      --surface-2:#242838;
+      --text:#E7E5DE;
+      --text-dim:#9297AC;
+      --border:#323649;
+      --teal:#4FB8A6;
+      --teal-soft:#1D3833;
+      --rust:#D9714F;
+      --rust-soft:#3A2620;
+      --gold:#D6A552;
+      --gold-soft:#3A3220;
+      --code-bg:#10121A;
+      --code-text:#E7E5DE;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+      --focus:#6FA0FF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161F;
+    --surface:#1C1F2B;
+    --surface-2:#242838;
+    --text:#E7E5DE;
+    --text-dim:#9297AC;
+    --border:#323649;
+    --teal:#4FB8A6;
+    --teal-soft:#1D3833;
+    --rust:#D9714F;
+    --rust-soft:#3A2620;
+    --gold:#D6A552;
+    --gold-soft:#3A3220;
+    --code-bg:#10121A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    --focus:#6FA0FF;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-ui);
+    line-height:1.6;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal);}
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  h1,h2,h3,h4{
+    font-family:var(--font-ui);
+    font-weight:600;
+    line-height:1.25;
+    margin:0 0 0.6em 0;
+  }
+  h1{font-size:2.1rem; font-weight:700;}
+  h2{font-size:1.5rem; letter-spacing:-0.01em;}
+  h3{font-size:1.15rem;}
+  p{margin:0 0 1em 0; max-width:70ch;}
+  ul,ol{margin:0 0 1em 0; padding-left:1.3em;}
+  li{margin-bottom:0.4em;}
+
+  code, pre, .mono{ font-family:var(--font-code); }
+  code{
+    background:var(--surface-2);
+    padding:0.15em 0.4em;
+    border-radius:4px;
+    font-size:0.9em;
+  }
+  pre{
+    background:var(--code-bg);
+    color:var(--code-text);
+    padding:1.1em 1.2em;
+    border-radius:8px;
+    overflow-x:auto;
+    font-size:0.87rem;
+    line-height:1.55;
+    margin:0 0 1em 0;
+    border:1px solid var(--border);
+  }
+  pre code{ background:none; padding:0; font-size:1em; color:inherit; }
+
+  .kw{color:#8FB4E8;}
+  .st{color:#C7D9A0;}
+  .cm{color:#7C8199; font-style:italic;}
+  .fn{color:#E4C07A;}
+  .tp{color:#7FCFC0;}
+  .hl{color:#D6A552;}
+
+  /* ============ Layout shell ============ */
+  .shell{
+    display:flex;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .rail{
+    width:230px;
+    flex-shrink:0;
+    padding:2.2rem 1rem 2rem 1.5rem;
+    position:sticky;
+    top:0;
+    align-self:flex-start;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .rail-title{
+    font-size:0.72rem;
+    color:var(--text-dim);
+    margin:0 0 1rem 0;
+    padding-bottom:0.6rem;
+    border-bottom:1px solid var(--border);
+  }
+  .rail ol{ list-style:none; padding:0; margin:0; }
+  .rail li{ margin:0; }
+  .rail a{
+    display:flex;
+    gap:0.6em;
+    align-items:baseline;
+    text-decoration:none;
+    color:var(--text-dim);
+    font-size:0.86rem;
+    padding:0.42em 0.5em;
+    border-radius:6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .rail a .n{
+    font-family:var(--font-code);
+    font-size:0.78rem;
+    color:var(--text-dim);
+    flex-shrink:0;
+    width:1.4em;
+  }
+  .rail a:hover{ background:var(--surface-2); color:var(--text); }
+  .rail a.active{ color:var(--teal); background:var(--teal-soft); }
+  .rail a.active .n{ color:var(--teal); }
+
+  .topnav{ display:none; }
+
+  main{
+    flex:1;
+    min-width:0;
+    padding:2.4rem 3rem 6rem 3rem;
+  }
+  section{
+    padding-top:1.2rem;
+    margin-bottom:3.2rem;
+    scroll-margin-top:1.5rem;
+  }
+  .eyebrow{
+    color:var(--text-dim);
+    font-size:0.9rem;
+    margin:0 0 0.3em 0;
+  }
+
+  @media (max-width: 980px){
+    .rail{ display:none; }
+    .topnav{
+      display:flex;
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      overflow-x:auto;
+      padding:0.6rem 1rem;
+      gap:0.4rem;
+      -webkit-overflow-scrolling:touch;
+    }
+    .topnav a{
+      flex-shrink:0;
+      font-size:0.8rem;
+      color:var(--text-dim);
+      text-decoration:none;
+      padding:0.35em 0.7em;
+      border-radius:20px;
+      border:1px solid var(--border);
+      white-space:nowrap;
+    }
+    .topnav a.active{ color:var(--teal); border-color:var(--teal); background:var(--teal-soft); }
+    main{ padding:1.6rem 1.2rem 4rem 1.2rem; }
+    h1{ font-size:1.7rem; }
+  }
+
+  /* ============ Header / hero ============ */
+  .hero{
+    padding:2.6rem 0 1rem 0;
+    border-bottom:1px solid var(--border);
+    margin-bottom:2.6rem;
+  }
+  .hero .kicker{
+    color:var(--teal);
+    font-weight:600;
+    font-size:0.95rem;
+    margin-bottom:0.4rem;
+  }
+  .hero h1{ margin-bottom:0.5rem; }
+  .hero .sub{ color:var(--text-dim); font-size:1.05rem; max-width:62ch; }
+
+  .switcher{
+    margin-top:1.8rem;
+    display:flex;
+    gap:1.6rem;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .switcher-buttons{ display:flex; flex-direction:column; gap:0.5rem; }
+  .provider-btn{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:0.6em 1em;
+    font-family:var(--font-ui);
+    font-size:0.92rem;
+    cursor:pointer;
+    text-align:left;
+    box-shadow:var(--shadow);
+  }
+  .provider-btn .dot{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; }
+  .provider-btn.active{ border-color:var(--teal); color:var(--teal); }
+  .provider-btn.active .dot{ background:var(--teal); }
+  .switcher-demo{
+    flex:1;
+    min-width:280px;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.1em 1.3em;
+  }
+  .switcher-demo .line1{ color:#7C8199; font-family:var(--font-code); font-size:0.82rem; margin-bottom:0.5em;}
+  .switcher-demo .line2{ font-family:var(--font-code); font-size:0.95rem; color:var(--code-text); }
+  .switcher-note{ color:var(--text-dim); font-size:0.85rem; margin-top:0.9em; }
+  #swStrategy{ color:#7FCFC0; }
+
+  /* ============ Term definitions ============ */
+  .term{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--teal);
+    border-radius:6px;
+    padding:0.9em 1.1em;
+    margin:0 0 1.1em 0;
+    font-size:0.94rem;
+  }
+  .term .word{ font-weight:600; color:var(--teal); }
+  .term .ex{ color:var(--text-dim); }
+  .term code{ background:var(--surface-2); }
+
+  /* ============ Callouts / cards ============ */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin-bottom:1.3em;
+    box-shadow:var(--shadow);
+  }
+  .card h3{ margin-top:0; }
+  .bad-tag, .good-tag{
+    display:inline-block;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:0.15em 0.6em;
+    border-radius:20px;
+    margin-bottom:0.7em;
+  }
+  .bad-tag{ background:var(--rust-soft); color:var(--rust); }
+  .good-tag{ background:var(--teal-soft); color:var(--teal); }
+  .consequence-list li::marker{ color:var(--rust); }
+  .consequence-list{ background:var(--rust-soft); padding:1em 1.2em 1em 2.1em; border-radius:8px; margin-bottom:1.1em; }
+  .consequence-list li{ color:var(--text); }
+
+  /* ============ Quiz ============ */
+  .quiz{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin:1.6em 0;
+  }
+  .quiz .q-label{ color:var(--gold); font-weight:600; font-size:0.85rem; margin-bottom:0.4em; }
+  .quiz .q-prompt{ font-weight:600; margin-bottom:1em; }
+  .quiz .options{ display:flex; flex-direction:column; gap:0.55em; margin-bottom:0.8em; }
+  .quiz .option{
+    text-align:left;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0.7em 1em;
+    font-family:var(--font-ui);
+    font-size:0.93rem;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .quiz .option:hover:not(:disabled){ border-color:var(--teal); }
+  .quiz .option:disabled{ cursor:default; }
+  .quiz .option.is-correct{ border-color:var(--teal); background:var(--teal-soft); }
+  .quiz .option.is-incorrect{ border-color:var(--rust); background:var(--rust-soft); }
+  .quiz .verdict{ font-weight:600; margin-bottom:0.4em; display:none; }
+  .quiz .verdict.good{ color:var(--teal); display:block; }
+  .quiz .verdict.bad{ color:var(--rust); display:block; }
+  .quiz .explain{ display:none; font-size:0.92rem; color:var(--text-dim); background:var(--surface-2); padding:0.9em 1em; border-radius:8px; }
+
+  /* ============ Details / reveal ============ */
+  details.reveal{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:0.2em 1.4em;
+    margin:1.2em 0;
+  }
+  details.reveal summary{
+    cursor:pointer;
+    padding:0.9em 0;
+    font-weight:600;
+    color:var(--gold);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:0.5em;
+  }
+  details.reveal summary::-webkit-details-marker{ display:none; }
+  details.reveal summary::before{
+    content:"▸";
+    display:inline-block;
+    transition:transform 0.15s;
+    color:var(--gold);
+  }
+  details.reveal[open] summary::before{ transform:rotate(90deg); }
+  details.reveal .reveal-body{ padding:0 0 1.1em 0; border-top:1px solid var(--border); margin-top:0.2em; padding-top:1em; }
+
+  /* ============ Diagram ============ */
+  .diagram-wrap{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.2rem;
+    margin-bottom:1.3em;
+    overflow-x:auto;
+  }
+  .uml-box{ fill:var(--surface-2); stroke:var(--border); stroke-width:1.2; }
+  .uml-box.ctx{ stroke:var(--gold); }
+  .uml-box.iface{ stroke:var(--teal); }
+  .uml-box.deco{ stroke:var(--gold); }
+  .uml-text{ fill:var(--text); font-family:var(--font-code); font-size:12px; }
+  .uml-title{ fill:var(--text); font-family:var(--font-ui); font-weight:600; font-size:13px; }
+  .uml-stereotype{ fill:var(--text-dim); font-family:var(--font-ui); font-size:11px; font-style:italic; }
+  .uml-line{ stroke:var(--text-dim); stroke-width:1.3; fill:none; }
+  .uml-line.dashed{ stroke-dasharray:5,4; }
+  .uml-line.holds{ stroke:var(--gold); stroke-width:1.4; }
+  .uml-arrow{ fill:var(--text-dim); }
+  .uml-diamond{ fill:var(--gold); }
+  .uml-label{ fill:var(--gold); font-family:var(--font-ui); font-size:11px; font-weight:600; font-style:italic; }
+
+  /* ============ Domain example grid ============ */
+  .domain-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  @media (max-width:760px){ .domain-grid{ grid-template-columns:1fr; } }
+  .domain-card h4{ color:var(--teal); font-size:0.95rem; margin-bottom:0.5em; }
+
+  /* ============ Comparison table ============ */
+  .compare{ width:100%; border-collapse:collapse; margin-bottom:1em; font-size:0.92rem; }
+  .compare th, .compare td{ border:1px solid var(--border); padding:0.7em 0.9em; text-align:left; vertical-align:top; }
+  .compare th{ background:var(--surface-2); font-weight:600; }
+  .rule-line{
+    background:var(--gold-soft);
+    border-left:3px solid var(--gold);
+    padding:0.8em 1.1em;
+    border-radius:6px;
+    font-size:0.93rem;
+  }
+
+  /* ============ Cheat sheet ============ */
+  .cheat{
+    background:var(--surface);
+    border:1px solid var(--teal);
+    border-radius:12px;
+    padding:1.6em 1.8em;
+  }
+  .cheat dt{ color:var(--teal); font-weight:600; font-size:0.85rem; margin-top:0.9em; }
+  .cheat dt:first-child{ margin-top:0; }
+  .cheat dd{ margin:0.2em 0 0 0; }
+
+  .exercise-box{
+    background:var(--gold-soft);
+    border:1px solid var(--gold);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+  }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:2rem 3rem 3rem 3rem;
+    color:var(--text-dim);
+    font-size:0.85rem;
+    border-top:1px solid var(--border);
+  }
+  @media (max-width: 980px){ footer{ padding:2rem 1.2rem 3rem 1.2rem; } }
+
+  .also-note{
+    background:var(--surface-2);
+    border-radius:8px;
+    padding:0.9em 1.1em;
+    font-size:0.9rem;
+    color:var(--text-dim);
+    margin-bottom:1em;
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav" id="topnav" aria-label="Section navigation"></nav>
+
+<div class="shell">
+  <nav class="rail" aria-label="Lesson sections">
+    <div class="rail-title">Decorator</div>
+    <ol id="railList"></ol>
+  </nav>
+
+  <main>
+    <header class="hero" id="s-hero">
+      <div class="kicker">Design pattern · Decorator</div>
+      <h1>Decorator</h1>
+      <p class="sub">You already know Strategy (swap behavior), Factory Method (swap which class gets built), and
+      Adapter (make an incompatible class fit). Decorator answers a different question: how do you stack
+      independent, optional features onto an object, in any combination, without a new subclass for every
+      combination? Pick a notifier configuration below to see it before we name it.</p>
+
+      <div class="switcher">
+        <div class="switcher-buttons" role="group" aria-label="Choose a notifier configuration">
+          <button class="provider-btn active" data-provider="plain" data-line="notifier = EmailNotifier(&quot;a@b.com&quot;)" data-desc="Just the base notifier. No retry, no logging.">
+            <span class="dot"></span> Plain
+          </button>
+          <button class="provider-btn" data-provider="retry" data-line="notifier = RetryDecorator(EmailNotifier(&quot;a@b.com&quot;))" data-desc="RetryDecorator wraps EmailNotifier — same send(message) call, now retries up to 3 times on failure.">
+            <span class="dot"></span> + Retry
+          </button>
+          <button class="provider-btn" data-provider="both" data-line="notifier = LoggingDecorator(RetryDecorator(EmailNotifier(&quot;a@b.com&quot;)))" data-desc="LoggingDecorator wraps RetryDecorator, which wraps EmailNotifier — three layers, same send(message) call.">
+            <span class="dot"></span> + Retry + Logging
+          </button>
+        </div>
+        <div class="switcher-demo">
+          <div class="line1">orders_service.py — the code that sends a notification</div>
+          <div class="line2"><span id="swStrategy">notifier = EmailNotifier("a@b.com")</span><br>notifier.send(<span class="st">"Order shipped"</span>)</div>
+          <div class="switcher-note" id="swNote">Just the base notifier. No retry, no logging.</div>
+        </div>
+      </div>
+      <p class="switcher-note" style="margin-top:1.1em;">Notice what <strong>doesn't</strong> change: the second line, <code>notifier.send(...)</code>.
+      Every configuration is called exactly the same way, no matter how many layers are wrapped around it.
+      That's Decorator.</p>
+    </header>
+
+    <!-- ================= 1. THE PROBLEM ================= -->
+    <section id="s-problem">
+      <p class="eyebrow">1 · The problem</p>
+      <h2>A notification sender that needs optional features, in any combination</h2>
+      <p>You're building the part of an e-commerce backend that sends order notifications. The base behavior is
+      simple: send an email. But different call sites need different extras layered on top. Some need automatic
+      retry if the send fails. Some need every attempt logged for debugging. Some need both. Some need a rate
+      limit so a batch job can't flood a customer's inbox. Every combination of these needs to actually work, and
+      more extras — like an encryption step — are already planned for next quarter.</p>
+
+      <div class="term">
+        <span class="word">Interface</span> — a contract that says which methods a class must provide, without
+        saying how they work. <span class="ex">Example: "anything that claims to be a notifier must have a
+        <code>send(message) -> bool</code> method" — that's the whole contract.</span>
+      </div>
+
+      <p>Here's the first version, written when only retry and logging existed.</p>
+    </section>
+
+    <!-- ================= 2. BAD EXAMPLE ================= -->
+    <section id="s-bad">
+      <p class="eyebrow">2 · The naive version</p>
+      <h2>A subclass for every combination of features</h2>
+      <div class="card">
+        <span class="bad-tag">Works for two features — falls apart at three</span>
+        <pre><code><span class="kw">class</span> <span class="fn">EmailNotifier</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, address: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._address = address
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="fn">print</span>(<span class="st">f"[email] to {self._address}: {message}"</span>)
+        <span class="kw">return</span> <span class="kw">True</span>
+
+
+<span class="kw">class</span> <span class="fn">EmailNotifierWithRetry</span>(EmailNotifier):
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(<span class="hl">1</span>, <span class="hl">4</span>):
+            <span class="fn">print</span>(<span class="st">f"[retry] attempt {attempt}"</span>)
+            <span class="kw">if</span> <span class="fn">super</span>().send(message):
+                <span class="kw">return</span> <span class="kw">True</span>
+        <span class="kw">return</span> <span class="kw">False</span>
+
+
+<span class="kw">class</span> <span class="fn">EmailNotifierWithRetryAndLogging</span>(EmailNotifierWithRetry):
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="fn">print</span>(<span class="st">f"[log] sending: {message}"</span>)
+        result = <span class="fn">super</span>().send(message)
+        <span class="fn">print</span>(<span class="st">f"[log] result: {result}"</span>)
+        <span class="kw">return</span> result</code></pre>
+
+        <p>Run once, it works:</p>
+        <pre><code>EmailNotifierWithRetryAndLogging(<span class="st">"a@b.com"</span>).send(<span class="st">"Order shipped"</span>)
+<span class="cm"># [log] sending: Order shipped</span>
+<span class="cm"># [retry] attempt 1</span>
+<span class="cm"># [email] to a@b.com: Order shipped</span>
+<span class="cm"># [log] result: True</span></code></pre>
+
+        <p>Here's exactly what this costs you as more features and more base notifiers arrive:</p>
+        <ul class="consequence-list">
+          <li>You need logging <em>without</em> retry for one call site. That's a third class, <code>EmailNotifierWithLogging</code>, and its <code>send</code> body duplicates the logging lines already written inside <code>EmailNotifierWithRetryAndLogging</code>.</li>
+          <li>You need rate limiting too. Now you potentially need <code>EmailNotifierWithRetryAndLoggingAndRateLimit</code>, <code>EmailNotifierWithLoggingAndRateLimit</code>, <code>EmailNotifierWithRetryAndRateLimit</code> — every combination of 3 features is a separate class. With 3 optional features that's up to 7 non-trivial subclasses; with 4 features it's up to 15.</li>
+          <li>Add an <code>SMSNotifier</code> next to <code>EmailNotifier</code>, and the entire subclass tree has to be rebuilt a second time — <code>SMSNotifierWithRetry</code>, <code>SMSNotifierWithRetryAndLogging</code>, and so on — because none of the email subclasses' logic can be reused for SMS.</li>
+          <li>The retry count is fixed inside <code>EmailNotifierWithRetry.send</code> as the literal <code>range(1, 4)</code>. If one call site wants 5 retries and another wants 3, that's yet another subclass or a constructor parameter threaded through every class in the chain.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= 3. TRANSFORM STEP BY STEP ================= -->
+    <section id="s-transform">
+      <p class="eyebrow">3 · Building the fix, one step at a time</p>
+      <h2>From a subclass tree to features that stack at runtime</h2>
+
+      <h3>Step 1 — collapse the subclasses into flags on one class</h3>
+      <p>A common first instinct: stop making subclasses, and add boolean flags to one class instead.</p>
+      <pre><code><span class="kw">class</span> <span class="fn">EmailNotifierConfigurable</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, address: <span class="tp">str</span>, retry: <span class="tp">bool</span> = <span class="kw">False</span>, log: <span class="tp">bool</span> = <span class="kw">False</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._address = address
+        <span class="kw">self</span>._retry = retry
+        <span class="kw">self</span>._log = log
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="kw">if</span> <span class="kw">self</span>._log:
+            <span class="fn">print</span>(<span class="st">f"[log] sending: {message}"</span>)
+        attempts = <span class="hl">3</span> <span class="kw">if</span> <span class="kw">self</span>._retry <span class="kw">else</span> <span class="hl">1</span>
+        result = <span class="kw">False</span>
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(attempts):
+            <span class="kw">if</span> <span class="kw">self</span>._retry:
+                <span class="fn">print</span>(<span class="st">f"[retry] attempt {i + 1}"</span>)
+            result = <span class="kw">self</span>._do_send(message)
+            <span class="kw">if</span> result:
+                <span class="kw">break</span>
+        <span class="kw">if</span> <span class="kw">self</span>._log:
+            <span class="fn">print</span>(<span class="st">f"[log] result: {result}"</span>)
+        <span class="kw">return</span> result
+
+    <span class="kw">def</span> <span class="fn">_do_send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="fn">print</span>(<span class="st">f"[email] to {self._address}: {message}"</span>)
+        <span class="kw">return</span> <span class="kw">True</span></code></pre>
+      <p>This does remove the subclass explosion — one class, two flags, no new class per combination. But
+      <code>EmailNotifierConfigurable.send</code> is now a single method that interleaves retry logic and logging
+      logic with <code>if self._retry</code> / <code>if self._log</code> checks throughout its body. Add a third
+      flag, <code>rate_limit</code>, and you're back to editing this one already-tangled method — exactly the
+      "editing existing, working code to add a feature" problem from Section 2, just moved from the class
+      hierarchy into one method's control flow. Decorator fixes the deeper issue: each feature gets its own
+      class again, but instead of subclassing, those classes wrap each other.</p>
+
+      <h3>Step 2 — give every notifier, wrapped or not, the same interface</h3>
+      <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="kw">class</span> <span class="fn">Notifier</span>(ABC):
+    <span class="cm">"""Target interface: the only notification shape our code calls."""</span>
+
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="cm">"""Send message. Return True on success."""</span>
+        ...
+
+
+<span class="cm">### concrete component — the real, undecorated notifier</span>
+<span class="kw">class</span> <span class="fn">EmailNotifier</span>(Notifier):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, address: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._address = address
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="fn">print</span>(<span class="st">f"[email] to {self._address}: {message}"</span>)
+        <span class="kw">return</span> <span class="kw">True</span></code></pre>
+
+      <h3>Step 3 — a base decorator that also implements Notifier, and holds one</h3>
+      <div class="term">
+        <span class="word">Component</span> — in Decorator specifically, the shared interface that both the plain
+        object and every wrapped version of it implement. <span class="ex">Example: <code>Notifier</code> is the
+        component — both <code>EmailNotifier</code> and every decorator around it satisfy it.</span>
+      </div>
+      <div class="term">
+        <span class="word">Decorator</span> — a class that implements the component interface, holds another
+        component instance internally, and adds behavior before or after delegating to it.
+        <span class="ex">Example: <code>NotifierDecorator</code> below implements <code>Notifier</code> and holds
+        a <code>Notifier</code> in <code>self._wrapped</code> — it can wrap an <code>EmailNotifier</code>, or
+        just as easily wrap another decorator.</span>
+      </div>
+      <div class="term">
+        <span class="word">Composition over inheritance</span> — building behavior by holding a reference to
+        another object (composition), rather than inheriting from it. <span class="ex">Example:
+        <code>RetryDecorator</code> doesn't inherit from <code>EmailNotifier</code> — it holds whatever
+        <code>Notifier</code> it's given in <code>self._wrapped</code>, so it works on any notifier, not just
+        email.</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="fn">NotifierDecorator</span>(Notifier):
+    <span class="cm">"""Base decorator: wraps another Notifier and forwards send by default."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, wrapped: Notifier) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._wrapped = wrapped
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.send(message)</code></pre>
+      <p><code>NotifierDecorator</code> is itself a <code>Notifier</code> — that's the detail that makes stacking
+      possible. Anything that accepts a <code>Notifier</code> will accept a <code>NotifierDecorator</code>, which
+      means a decorator can wrap <em>another</em> decorator, not just the base <code>EmailNotifier</code>.</p>
+
+      <h3>Step 4 — one small class per feature, each overriding send</h3>
+      <pre><code><span class="kw">class</span> <span class="fn">RetryDecorator</span>(NotifierDecorator):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, wrapped: Notifier, attempts: <span class="tp">int</span> = <span class="hl">3</span>) -> <span class="tp">None</span>:
+        <span class="fn">super</span>().__init__(wrapped)
+        <span class="kw">self</span>._attempts = attempts
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(<span class="hl">1</span>, <span class="kw">self</span>._attempts + <span class="hl">1</span>):
+            <span class="fn">print</span>(<span class="st">f"[retry] attempt {attempt}"</span>)
+            <span class="kw">if</span> <span class="kw">self</span>._wrapped.send(message):
+                <span class="kw">return</span> <span class="kw">True</span>
+        <span class="kw">return</span> <span class="kw">False</span>
+
+
+<span class="kw">class</span> <span class="fn">LoggingDecorator</span>(NotifierDecorator):
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="fn">print</span>(<span class="st">f"[log] sending: {message}"</span>)
+        result = <span class="kw">self</span>._wrapped.send(message)
+        <span class="fn">print</span>(<span class="st">f"[log] result: {result}"</span>)
+        <span class="kw">return</span> result
+
+
+<span class="kw">class</span> <span class="fn">RateLimitDecorator</span>(NotifierDecorator):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, wrapped: Notifier, max_per_run: <span class="tp">int</span> = <span class="hl">1</span>) -> <span class="tp">None</span>:
+        <span class="fn">super</span>().__init__(wrapped)
+        <span class="kw">self</span>._max_per_run = max_per_run
+        <span class="kw">self</span>._sent = <span class="hl">0</span>
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="kw">if</span> <span class="kw">self</span>._sent >= <span class="kw">self</span>._max_per_run:
+            <span class="fn">print</span>(<span class="st">"[rate-limit] blocked"</span>)
+            <span class="kw">return</span> <span class="kw">False</span>
+        <span class="kw">self</span>._sent += <span class="hl">1</span>
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.send(message)
+
+
+<span class="cm"># usage — stack any combination, in any order</span>
+notifier = LoggingDecorator(RetryDecorator(EmailNotifier(<span class="st">"a@b.com"</span>)))
+notifier.send(<span class="st">"Order shipped"</span>)</code></pre>
+      <pre><code>[log] sending: Order shipped
+[retry] attempt 1
+[email] to a@b.com: Order shipped
+[log] result: True</code></pre>
+      <p>Need rate limiting on just one call site, with no retry and no logging?</p>
+      <pre><code>limited = RateLimitDecorator(EmailNotifier(<span class="st">"a@b.com"</span>), max_per_run=<span class="hl">1</span>)
+<span class="fn">print</span>(limited.send(<span class="st">"first"</span>)))   <span class="cm"># [email] to a@b.com: first  ->  True</span>
+<span class="fn">print</span>(limited.send(<span class="st">"second"</span>)))  <span class="cm"># [rate-limit] blocked        ->  False</span></code></pre>
+      <p>No new class was needed for that combination — <code>RateLimitDecorator</code> wraps
+      <code>EmailNotifier</code> directly, skipping <code>RetryDecorator</code> and <code>LoggingDecorator</code>
+      entirely. Every feature is independent, and none of them know the others exist.</p>
+    </section>
+
+    <!-- Checkpoint 1 -->
+    <section>
+      <div class="quiz" data-correct="c">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">A new call site needs retry, logging, <em>and</em> rate limiting together, all three. With the design above, what do you write?</div>
+        <div class="options">
+          <button class="option" data-id="a">A new subclass, <code>EmailNotifierWithRetryLoggingAndRateLimit</code>, combining all three behaviors.</button>
+          <button class="option" data-id="b">Edit <code>NotifierDecorator.send</code> to add branches for retry, logging, and rate limiting.</button>
+          <button class="option" data-id="c">No new class — wrap three existing decorators around each other: <code>LoggingDecorator(RetryDecorator(RateLimitDecorator(EmailNotifier(...))))</code>.</button>
+          <button class="option" data-id="d">Edit <code>EmailNotifier.send</code> to check flags for retry, logging, and rate limiting.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite. That's exactly the subclass-explosion problem from Section 2 — a brand new class for a combination that already exists as three independent pieces. Decorator's whole point is that you never write a class per combination.</div>
+        <div class="explain" data-for="b">Not quite. <code>NotifierDecorator.send</code> just forwards to <code>self._wrapped.send(message)</code> — it has no feature-specific logic to branch on. Each feature lives entirely inside its own subclass (<code>RetryDecorator</code>, <code>LoggingDecorator</code>, <code>RateLimitDecorator</code>).</div>
+        <div class="explain" data-for="c">Correct. Each decorator only needs to know about the one <code>Notifier</code> it wraps — not which specific class that is. Composing three existing decorators, in whatever order you want, is the entire mechanism. No existing class changes, and no new class gets written.</div>
+        <div class="explain" data-for="d">Not quite. <code>EmailNotifier</code> is the concrete component — the actual work of sending an email. Making it aware of retry, logging, and rate-limiting flags would pull all of Section 2's flag-tangle problem back into the one class that's supposed to just send email.</div>
+      </div>
+    </section>
+
+    <!-- ================= 4. DIAGRAM ================= -->
+    <section id="s-diagram">
+      <p class="eyebrow">4 · The shape of it</p>
+      <h2>A decorator implements the interface it also holds</h2>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 900 460" width="100%" style="max-width:860px; display:block; margin:0 auto;" role="img" aria-label="UML-style diagram: Notifier interface implemented by both EmailNotifier and NotifierDecorator; NotifierDecorator also holds a Notifier, forming a recursive composition; RetryDecorator, LoggingDecorator and RateLimitDecorator inherit from NotifierDecorator">
+          <!-- Notifier interface -->
+          <rect class="uml-box iface" x="340" y="20" width="220" height="70" rx="6"></rect>
+          <text class="uml-stereotype" x="450" y="40" text-anchor="middle">component / interface</text>
+          <text class="uml-title" x="450" y="60" text-anchor="middle">Notifier</text>
+          <text class="uml-text" x="450" y="80" text-anchor="middle">+ send(message): bool</text>
+
+          <!-- EmailNotifier -->
+          <rect class="uml-box" x="60" y="190" width="190" height="60" rx="6"></rect>
+          <text class="uml-stereotype" x="155" y="208" text-anchor="middle">concrete component</text>
+          <text class="uml-title" x="155" y="228" text-anchor="middle">EmailNotifier</text>
+          <text class="uml-text" x="155" y="243" text-anchor="middle">+ send(message)</text>
+
+          <!-- NotifierDecorator -->
+          <rect class="uml-box deco" x="650" y="190" width="220" height="70" rx="6"></rect>
+          <text class="uml-stereotype" x="760" y="208" text-anchor="middle">decorator (abstract)</text>
+          <text class="uml-title" x="760" y="228" text-anchor="middle">NotifierDecorator</text>
+          <text class="uml-text" x="760" y="245" text-anchor="middle">- _wrapped; + send(message)</text>
+
+          <!-- implements: EmailNotifier -> Notifier -->
+          <path class="uml-line dashed" d="M155,190 L155,150 L400,150 L400,90"></path>
+          <polygon class="uml-arrow" points="400,90 394,102 406,102"></polygon>
+
+          <!-- implements: NotifierDecorator -> Notifier -->
+          <path class="uml-line dashed" d="M780,190 L780,140 L500,140 L500,90"></path>
+          <polygon class="uml-arrow" points="500,90 494,102 506,102"></polygon>
+
+          <!-- holds: NotifierDecorator -> Notifier (recursive composition, the key shape) -->
+          <path class="uml-line holds" d="M650,215 L610,215 L610,55 L560,55"></path>
+          <polygon class="uml-diamond" points="650,215 638,209 638,221"></polygon>
+          <text class="uml-label" x="614" y="140" text-anchor="start" transform="rotate(-90 614 140)">holds a Notifier</text>
+
+          <!-- concrete decorators -->
+          <rect class="uml-box" x="420" y="340" width="130" height="60" rx="6"></rect>
+          <text class="uml-title" x="485" y="365" text-anchor="middle">RetryDecorator</text>
+          <text class="uml-text" x="485" y="383" text-anchor="middle">+ send(message)</text>
+
+          <rect class="uml-box" x="565" y="340" width="130" height="60" rx="6"></rect>
+          <text class="uml-title" x="630" y="365" text-anchor="middle">LoggingDecorator</text>
+          <text class="uml-text" x="630" y="383" text-anchor="middle">+ send(message)</text>
+
+          <rect class="uml-box" x="710" y="340" width="140" height="60" rx="6"></rect>
+          <text class="uml-title" x="780" y="365" text-anchor="middle">RateLimitDecorator</text>
+          <text class="uml-text" x="780" y="383" text-anchor="middle">+ send(message)</text>
+
+          <!-- inherits: concrete decorators -> NotifierDecorator -->
+          <path class="uml-line dashed" d="M485,340 L485,300 L760,300 L760,260"></path>
+          <polygon class="uml-arrow" points="760,260 754,272 766,272"></polygon>
+
+          <path class="uml-line dashed" d="M630,340 L630,280 L760,280 L760,260"></path>
+          <polygon class="uml-arrow" points="760,260 754,272 766,272"></polygon>
+
+          <path class="uml-line dashed" d="M780,340 L780,260"></path>
+          <polygon class="uml-arrow" points="780,260 774,272 786,272"></polygon>
+        </svg>
+        <p style="text-align:center; color:var(--text-dim); font-size:0.85rem; margin:0.6em 0 0 0;">
+          Dashed line + arrow = <em>implements the interface</em>. Solid gold line + diamond = <em>holds a
+          reference to</em>. The gold line looping back from <code>NotifierDecorator</code> to
+          <code>Notifier</code> — the same interface it implements — is what makes stacking possible.
+        </p>
+      </div>
+      <p>This loop is the one detail that separates Decorator from every other pattern you've seen so far.
+      <code>NotifierDecorator</code> both <em>is</em> a <code>Notifier</code> (dashed arrow up) and <em>holds</em>
+      a <code>Notifier</code> (gold line back). Because what it holds can be <code>EmailNotifier</code>,
+      <em>or another <code>NotifierDecorator</code></em>, wrapping <code>LoggingDecorator</code> around
+      <code>RetryDecorator</code> around <code>EmailNotifier</code> is just three objects, each holding the next.</p>
+    </section>
+
+    <!-- Checkpoint 2 -->
+    <section>
+      <div class="quiz" data-correct="b">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Why must <code>NotifierDecorator</code> implement <code>Notifier</code> itself, rather than just holding one?</div>
+        <div class="options">
+          <button class="option" data-id="a">It doesn't have to — <code>NotifierDecorator</code> implementing <code>Notifier</code> is a stylistic choice with no effect on behavior.</button>
+          <button class="option" data-id="b">If <code>NotifierDecorator</code> weren't itself a <code>Notifier</code>, you couldn't pass one decorator as the <code>wrapped</code> argument to another decorator's constructor — stacking <code>LoggingDecorator(RetryDecorator(...))</code> requires <code>RetryDecorator</code> to satisfy the same type <code>wrapped</code> expects.</button>
+          <button class="option" data-id="c">Because Python requires every class that holds another object to also inherit from that object's type.</button>
+          <button class="option" data-id="d">It's only needed so <code>isinstance</code> checks work correctly elsewhere in the codebase.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite — this isn't just style. Drop the inheritance and <code>RetryDecorator</code> would no longer satisfy the <code>wrapped: Notifier</code> parameter that <code>LoggingDecorator.__init__</code> expects, so stacking two decorators together would stop type-checking and stop working.</div>
+        <div class="explain" data-for="b">Correct. <code>LoggingDecorator(RetryDecorator(EmailNotifier(...)))</code> only works because <code>RetryDecorator</code> — a decorator — can itself be passed anywhere a <code>Notifier</code> is expected. That's precisely because <code>NotifierDecorator</code> inherits from <code>Notifier</code>. Remove that, and decorators could only ever wrap <code>EmailNotifier</code> directly, never each other.</div>
+        <div class="explain" data-for="c">Not quite — that's not a real Python rule. Plenty of classes hold references to objects of unrelated types. The reason here is specific to Decorator: the wrapper needs to be usable everywhere the thing it wraps is usable.</div>
+        <div class="explain" data-for="d">Not quite. This lesson's code doesn't rely on <code>isinstance</code> checks anywhere — <code>NotifierDecorator</code>'s <code>send</code> method is called polymorphically, the same way every other pattern in this series has used inheritance. The stacking behavior itself is the real reason.</div>
+      </div>
+    </section>
+
+    <!-- ================= 5. PREDICT THE OUTPUT ================= -->
+    <section id="s-predict">
+      <p class="eyebrow">5 · Predict the output</p>
+      <h2>What does this print? (Wrap order matters)</h2>
+      <p><code>FlakyEmailNotifier</code> fails on its first call and succeeds after that:</p>
+      <pre><code><span class="kw">class</span> <span class="fn">FlakyEmailNotifier</span>(Notifier):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, address: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._address = address
+        <span class="kw">self</span>._calls = <span class="hl">0</span>
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="kw">self</span>._calls += <span class="hl">1</span>
+        <span class="kw">if</span> <span class="kw">self</span>._calls == <span class="hl">1</span>:
+            <span class="fn">print</span>(<span class="st">f"[email] to {self._address}: FAILED to send '{message}'"</span>)
+            <span class="kw">return</span> <span class="kw">False</span>
+        <span class="fn">print</span>(<span class="st">f"[email] to {self._address}: {message}"</span>)
+        <span class="kw">return</span> <span class="kw">True</span></code></pre>
+      <p>Compare these two, built from the exact same three classes, just nested in the opposite order:</p>
+      <pre><code>a = LoggingDecorator(RetryDecorator(FlakyEmailNotifier(<span class="st">"a@b.com"</span>)))
+a.send(<span class="st">"Order shipped"</span>)
+
+<span class="cm"># ---</span>
+
+b = RetryDecorator(LoggingDecorator(FlakyEmailNotifier(<span class="st">"a@b.com"</span>)))
+b.send(<span class="st">"Order shipped"</span>)</code></pre>
+      <p>Write down what each one prints before opening the answer. Think about which object's <code>send</code>
+      body actually contains the <code>for</code> loop, and what's inside that loop each time.</p>
+      <details class="reveal">
+        <summary>Reveal answer</summary>
+        <div class="reveal-body">
+          <pre><code><span class="cm"># a = LoggingDecorator(RetryDecorator(FlakyEmailNotifier(...)))</span>
+[log] sending: Order shipped
+[retry] attempt 1
+[email] to a@b.com: FAILED to send 'Order shipped'
+[retry] attempt 2
+[email] to a@b.com: Order shipped
+[log] result: True
+
+<span class="cm"># b = RetryDecorator(LoggingDecorator(FlakyEmailNotifier(...)))</span>
+[retry] attempt 1
+[log] sending: Order shipped
+[email] to a@b.com: FAILED to send 'Order shipped'
+[log] result: False
+[retry] attempt 2
+[log] sending: Order shipped
+[email] to a@b.com: Order shipped
+[log] result: True</code></pre>
+          <p>In <code>a</code>, <code>LoggingDecorator</code> is outermost, so <code>[log] sending</code> and
+          <code>[log] result</code> print exactly once each — logging wraps the <em>whole</em> retry loop as one
+          unit. <code>RetryDecorator</code>'s loop runs underneath, invisible to logging except for its final
+          outcome.</p>
+          <p>In <code>b</code>, <code>RetryDecorator</code> is outermost, so its loop is what calls
+          <code>LoggingDecorator.send</code> — and that means <code>LoggingDecorator</code> runs fresh on
+          <em>every</em> retry attempt, printing a full sending/result pair each time. Same three classes, same
+          call, twice the log lines — because wrap order decides which decorator's loop the others live inside.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 6. OTHER DOMAINS ================= -->
+    <section id="s-domains">
+      <p class="eyebrow">6 · Same shape, different domain</p>
+      <h2>This isn't a notification-specific trick</h2>
+      <p>Decorator shows up anywhere independent extras need to stack onto a base object, in any combination,
+      without multiplying subclasses. Two more, from unrelated domains:</p>
+      <div class="domain-grid">
+        <div class="card domain-card">
+          <h4>Payments — fees stacking on a charge</h4>
+          <p>A checkout total starts as a base charge. International cards add a fee. Currency conversion adds
+          another. Either, both, or neither can apply to a given transaction.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">Charge</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">amount_cents</span>(<span class="kw">self</span>) -> <span class="tp">int</span>: ...
+
+<span class="kw">class</span> <span class="fn">BaseCharge</span>(Charge):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._amount = amount_cents
+    <span class="kw">def</span> <span class="fn">amount_cents</span>(<span class="kw">self</span>) -> <span class="tp">int</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._amount
+
+<span class="kw">class</span> <span class="fn">ChargeDecorator</span>(Charge):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, wrapped: Charge) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._wrapped = wrapped
+    <span class="kw">def</span> <span class="fn">amount_cents</span>(<span class="kw">self</span>) -> <span class="tp">int</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.amount_cents()
+
+<span class="kw">class</span> <span class="fn">CurrencyConversionFee</span>(ChargeDecorator):
+    <span class="kw">def</span> <span class="fn">amount_cents</span>(<span class="kw">self</span>) -> <span class="tp">int</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.amount_cents() + <span class="hl">150</span>
+
+<span class="kw">class</span> <span class="fn">InternationalFee</span>(ChargeDecorator):
+    <span class="kw">def</span> <span class="fn">amount_cents</span>(<span class="kw">self</span>) -> <span class="tp">int</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.amount_cents() + <span class="hl">300</span></code></pre>
+          <pre><code>total = InternationalFee(CurrencyConversionFee(BaseCharge(<span class="hl">5000</span>)))
+<span class="fn">print</span>(total.amount_cents())  <span class="cm"># 5450</span></code></pre>
+          <p>Same shape: <code>ChargeDecorator</code> is a <code>Charge</code> that holds a <code>Charge</code> —
+          fees stack by nesting, and any subset of fees can apply without a subclass for each combination.</p>
+        </div>
+        <div class="domain-card card">
+          <h4>UI — text formatting</h4>
+          <p>A text renderer might need to apply bold, italic, or both, to the same underlying text, in either
+          order.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">TextRenderer</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">render</span>(<span class="kw">self</span>, text: <span class="tp">str</span>) -> <span class="tp">str</span>: ...
+
+<span class="kw">class</span> <span class="fn">PlainText</span>(TextRenderer):
+    <span class="kw">def</span> <span class="fn">render</span>(<span class="kw">self</span>, text: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> text
+
+<span class="kw">class</span> <span class="fn">RendererDecorator</span>(TextRenderer):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, wrapped: TextRenderer) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._wrapped = wrapped
+    <span class="kw">def</span> <span class="fn">render</span>(<span class="kw">self</span>, text: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.render(text)
+
+<span class="kw">class</span> <span class="fn">Bold</span>(RendererDecorator):
+    <span class="kw">def</span> <span class="fn">render</span>(<span class="kw">self</span>, text: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> <span class="st">f"**{self._wrapped.render(text)}**"</span>
+
+<span class="kw">class</span> <span class="fn">Italic</span>(RendererDecorator):
+    <span class="kw">def</span> <span class="fn">render</span>(<span class="kw">self</span>, text: <span class="tp">str</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> <span class="st">f"_{self._wrapped.render(text)}_"</span></code></pre>
+          <pre><code>styled = Bold(Italic(PlainText()))
+<span class="fn">print</span>(styled.render(<span class="st">"Shipped"</span>))  <span class="cm"># **_Shipped_**</span></code></pre>
+          <p><code>Bold</code> and <code>Italic</code> never know about each other, exactly like
+          <code>RetryDecorator</code> and <code>LoggingDecorator</code> never know about each other — each just
+          wraps whatever <code>TextRenderer</code> it's given.</p>
+        </div>
+      </div>
+
+      <div class="also-note">
+        Three domains, one shape: a decorator base class (<code>NotifierDecorator</code>,
+        <code>ChargeDecorator</code>, <code>RendererDecorator</code>) implements the same interface it wraps, so
+        any number of concrete decorators can be nested around a base object, in any order, in any subset.
+      </div>
+
+      <h3>You've probably already used this without naming it</h3>
+      <p>Python's own <code>@decorator</code> syntax is named after this pattern for a reason. A function
+      decorator wraps a callable and returns something that can be called the exact same way:</p>
+      <pre><code><span class="kw">import</span> functools
+
+<span class="kw">def</span> <span class="fn">with_retry</span>(fn):
+    <span class="kw">@functools</span>.wraps(fn)
+    <span class="kw">def</span> <span class="fn">wrapper</span>(*args, **kwargs):
+        <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(<span class="hl">1</span>, <span class="hl">4</span>):
+            <span class="fn">print</span>(<span class="st">f"[fn-retry] attempt {attempt}"</span>)
+            result = fn(*args, **kwargs)
+            <span class="kw">if</span> result:
+                <span class="kw">return</span> result
+        <span class="kw">return</span> result
+    <span class="kw">return</span> wrapper
+
+<span class="kw">@with_retry</span>
+<span class="kw">def</span> <span class="fn">flaky_call</span>():
+    ...</code></pre>
+      <p><code>with_retry</code> plays exactly <code>RetryDecorator</code>'s role: it takes something callable,
+      returns something equally callable, and adds behavior around the call. The class-based version from this
+      lesson and Python's <code>@</code> syntax are the same idea — one applies to objects with several methods,
+      the other to single functions.</p>
+    </section>
+
+    <!-- Checkpoint 3 -->
+    <section>
+      <div class="quiz" data-correct="c">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt"><code>@with_retry</code> above wraps <code>flaky_call</code>. What role is <code>wrapper</code> (the inner function returned by <code>with_retry</code>) playing, in Decorator terms?</div>
+        <div class="options">
+          <button class="option" data-id="a">The component interface — it defines the contract every wrapped function must follow.</button>
+          <button class="option" data-id="b">The concrete component — it's the original, undecorated behavior.</button>
+          <button class="option" data-id="c">The decorator — it holds the original function (<code>fn</code>), can be called exactly like the original, and adds retry behavior around calling it.</button>
+          <button class="option" data-id="d">None of these — function decorators use a different mechanism entirely, unrelated to the class-based version above.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite. Nothing here defines a formal interface — Python functions are all callable the same way by default, so there's no explicit component contract to point to. That's part of why this version is lighter-weight than the class-based one.</div>
+        <div class="explain" data-for="b">Not quite — that's <code>flaky_call</code> itself, captured as <code>fn</code> inside <code>wrapper</code>. <code>wrapper</code> is the thing wrapped <em>around</em> it, not the original behavior.</div>
+        <div class="explain" data-for="c">Correct. <code>wrapper</code> closes over <code>fn</code> — the equivalent of <code>self._wrapped</code> — and is itself callable the same way <code>fn</code> is, exactly like <code>RetryDecorator</code> is itself a <code>Notifier</code> that holds a <code>Notifier</code>.</div>
+        <div class="explain" data-for="d">Not quite. The mechanism looks different — closures instead of classes and inheritance — but the shape is identical: something that holds the original behavior, exposes the same calling convention, and adds logic around the call.</div>
+      </div>
+    </section>
+
+    <!-- ================= 7. SPOT THE BUG ================= -->
+    <section id="s-bug">
+      <p class="eyebrow">7 · Spot the smell</p>
+      <h2>This is a decorator — but something's wrong</h2>
+      <pre><code><span class="kw">class</span> <span class="fn">BrokenLoggingDecorator</span>(NotifierDecorator):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, wrapped: Notifier) -> <span class="tp">None</span>:
+        <span class="kw">pass</span>  <span class="cm"># TODO: set self._wrapped somehow</span>
+
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="fn">print</span>(<span class="st">f"[log] sending: {message}"</span>)
+        result = <span class="kw">self</span>._wrapped.send(message)
+        <span class="fn">print</span>(<span class="st">f"[log] result: {result}"</span>)
+        <span class="kw">return</span> result</code></pre>
+      <p><code>BrokenLoggingDecorator</code> inherits from <code>NotifierDecorator</code>, exactly like
+      <code>LoggingDecorator</code> did. Something's still wrong. What happens when you construct it and call
+      <code>send</code>?</p>
+      <details class="reveal">
+        <summary>Reveal explanation</summary>
+        <div class="reveal-body">
+          <pre><code>broken = BrokenLoggingDecorator(EmailNotifier(<span class="st">"a@b.com"</span>))
+broken.send(<span class="st">"Order shipped"</span>)
+<span class="cm"># [log] sending: Order shipped</span>
+<span class="cm"># AttributeError: 'BrokenLoggingDecorator' object has no attribute '_wrapped'</span></code></pre>
+          <p>The bug: <code>__init__</code> overrides <code>NotifierDecorator.__init__</code> but never calls
+          <code>super().__init__(wrapped)</code> — and never sets <code>self._wrapped</code> any other way. The
+          <code>wrapped</code> argument is accepted and then silently discarded. <code>[log] sending</code>
+          prints fine, because that line doesn't touch <code>self._wrapped</code> — but the very next line,
+          <code>self._wrapped.send(message)</code>, crashes, because that attribute was never set on this
+          instance at all.</p>
+          <p>This is a version of a bug that shows up constantly with decorators: overriding <code>__init__</code>
+          in a subclass without calling the parent's <code>__init__</code>, either directly or through
+          <code>super()</code>. Every concrete decorator that needs its own constructor — like
+          <code>RetryDecorator</code>, which also stores <code>attempts</code> — must call
+          <code>super().__init__(wrapped)</code> first, so the one piece of state every decorator relies on,
+          <code>self._wrapped</code>, actually gets set.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 8. WHEN NOT TO USE ================= -->
+    <section id="s-tradeoffs">
+      <p class="eyebrow">8 · Trade-offs</p>
+      <h2>When not to reach for Decorator</h2>
+      <p>Decorator costs you an extra base class and a wrapper class per feature — more indirection to step
+      through when reading a stack trace, since a call to <code>send</code> might pass through three or four
+      objects before doing real work. That's worth it once features genuinely combine independently. It's not
+      worth it when there's only ever going to be one fixed feature.</p>
+      <div class="card">
+        <span class="bad-tag">Over-engineered</span>
+        <pre><code><span class="kw">class</span> <span class="fn">Notifier</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>: ...
+
+<span class="kw">class</span> <span class="fn">EmailNotifier</span>(Notifier):
+    ...
+
+<span class="kw">class</span> <span class="fn">NotifierDecorator</span>(Notifier):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, wrapped: Notifier) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._wrapped = wrapped
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.send(message)
+
+<span class="kw">class</span> <span class="fn">HashingDecorator</span>(NotifierDecorator):
+    <span class="kw">def</span> <span class="fn">send</span>(<span class="kw">self</span>, message: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        message = <span class="fn">hash_message</span>(message)  <span class="cm"># always applied, everywhere, no exceptions</span>
+        <span class="kw">return</span> <span class="kw">self</span>._wrapped.send(message)</code></pre>
+        <p>If every single message, at every call site, forever, must be hashed before sending — with no call
+        site that ever skips it — this is four classes and one layer of indirection for something a single line
+        inside <code>EmailNotifier.send</code> would say more plainly:
+        <code>message = hash_message(message)</code> before the <code>print</code>. Reach for Decorator when a
+        feature is genuinely optional and needs to combine with other optional features — not when it's really a
+        mandatory step of the base behavior that always runs.</p>
+      </div>
+
+      <h3>Decorator vs. Proxy — easy to mix up</h3>
+      <p>Both wrap an object and implement the same interface as what they wrap. The difference is <em>why</em>
+      you're wrapping it, and whether the caller is meant to notice.</p>
+      <table class="compare">
+        <tr><th></th><th>Decorator</th><th>Proxy</th></tr>
+        <tr><td>Goal</td><td>Add new behavior the caller explicitly chose (retry, logging, rate limiting)</td><td>Control or manage access to the real object, transparently (lazy loading, permission checks, caching)</td></tr>
+        <tr><td>Does the caller choose it</td><td>Yes — <code>LoggingDecorator(RetryDecorator(...))</code> is deliberately assembled by the code that constructs it</td><td>Often no — a factory or framework hands you a proxy and you use it exactly like the real thing, unaware it's not</td></tr>
+        <tr><td>Stacking</td><td>Designed to stack — several decorators, in any order, is the normal case</td><td>Usually one layer — you don't typically stack five proxies around one object</td></tr>
+      </table>
+      <div class="rule-line">One-line rule: if the caller is deliberately opting into extra behavior by choosing what to wrap with,
+      it's Decorator. If the wrapper exists to manage access to the real object without the caller needing to
+      know or care, it's Proxy.</div>
+    </section>
+
+    <!-- ================= 9. PRACTICE ================= -->
+    <section id="s-practice">
+      <p class="eyebrow">9 · Cheat sheet &amp; practice</p>
+      <h2>Cheat sheet</h2>
+      <div class="cheat">
+        <dl>
+          <dt>Problem it solves</dt>
+          <dd>Several independent, optional features need to combine on top of a base object, in any subset and any order, without a subclass for every combination.</dd>
+          <dt>Core idea, in one sentence</dt>
+          <dd>Write a base decorator that implements the same interface as the object it wraps and holds one instance of that interface, then give each feature its own small decorator subclass that adds behavior before or after delegating to what it wraps.</dd>
+          <dt>Trade-off</dt>
+          <dd>More classes and more indirection — a single call can pass through several wrapper layers before doing real work, which makes stack traces longer to read.</dd>
+          <dt>The smell that tells you to reach for it</dt>
+          <dd>A subclass tree (or a single class full of boolean flags) trying to represent every combination of optional features on the same base behavior.</dd>
+        </dl>
+      </div>
+
+      <h2 style="margin-top:2rem;">Your turn</h2>
+      <div class="exercise-box">
+        <p><strong>Scenario:</strong> you're building a <code>FileStorageClient</code> for uploading files to
+        cloud storage. The base client has one method, <code>upload(data: bytes, key: str) -> bool</code>, that
+        just uploads raw bytes under a given key. Product wants three optional, independently toggleable
+        features: gzip compression before upload, AES encryption before upload, and a checksum written alongside
+        the file for integrity verification. Any subset of these three might apply to a given upload — some
+        files need all three, some need just encryption, some need none.</p>
+        <p><strong>Task:</strong> apply Decorator to this. Name the component interface and the method it
+        requires. Name the concrete component (the real, undecorated client). Name the base decorator class, and
+        describe what it holds and what its default <code>upload</code> implementation does. Name at least two
+        concrete decorators, and for each one, describe what it does to <code>data</code> before calling
+        <code>self._wrapped.upload(...)</code>. Then explain, in a sentence or two, why wrapping the compression
+        decorator around the encryption decorator would produce different bytes on the wire than wrapping them
+        in the opposite order — the same kind of order-dependence you just saw with
+        <code>LoggingDecorator</code> and <code>RetryDecorator</code>. You don't need to write the
+        implementation — just describe it clearly enough that you could code it from your own description.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  Decorator pattern lesson · built for system design / SWE interview prep.
+</footer>
+
+<script>
+(function(){
+  // ---------- Section registry for nav ----------
+  var sections = [
+    {id:'s-hero', label:'Start'},
+    {id:'s-problem', label:'The problem'},
+    {id:'s-bad', label:'Naive version'},
+    {id:'s-transform', label:'Building the fix'},
+    {id:'s-diagram', label:'Class diagram'},
+    {id:'s-predict', label:'Predict output'},
+    {id:'s-domains', label:'Other domains'},
+    {id:'s-bug', label:'Spot the smell'},
+    {id:'s-tradeoffs', label:'Trade-offs'},
+    {id:'s-practice', label:'Cheat sheet'}
+  ];
+
+  var railList = document.getElementById('railList');
+  var topnav = document.getElementById('topnav');
+
+  sections.forEach(function(s, i){
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.dataset.target = s.id;
+    var n = document.createElement('span');
+    n.className = 'n';
+    n.textContent = String(i + 1).padStart(2, '0');
+    a.appendChild(n);
+    a.appendChild(document.createTextNode(s.label));
+    li.appendChild(a);
+    railList.appendChild(li);
+
+    var ta = document.createElement('a');
+    ta.href = '#' + s.id;
+    ta.dataset.target = s.id;
+    ta.textContent = s.label;
+    topnav.appendChild(ta);
+  });
+
+  var allNavLinks = document.querySelectorAll('.rail a, .topnav a');
+
+  function setActive(id){
+    allNavLinks.forEach(function(a){
+      if (a.dataset.target === id) a.classList.add('active');
+      else a.classList.remove('active');
+    });
+  }
+
+  if ('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      var visible = entries.filter(function(e){ return e.isIntersecting; });
+      if (visible.length > 0){
+        visible.sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+        setActive(visible[0].target.id);
+      }
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(function(s){
+      var el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  }
+
+  // ---------- Hero configuration switcher ----------
+  var swStrategy = document.getElementById('swStrategy');
+  var swNote = document.getElementById('swNote');
+  document.querySelectorAll('.provider-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.provider-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      swStrategy.textContent = btn.dataset.line;
+      swNote.innerHTML = btn.dataset.desc.replace(/`([^`]+)`/g, '<code>$1</code>');
+    });
+  });
+
+  // ---------- Quiz logic ----------
+  document.querySelectorAll('.quiz').forEach(function(quiz){
+    var correctId = quiz.dataset.correct;
+    var verdictEl = quiz.querySelector('.verdict');
+
+    quiz.querySelectorAll('.option').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (quiz.dataset.answered === 'true') return;
+        quiz.dataset.answered = 'true';
+
+        quiz.querySelectorAll('.option').forEach(function(b){
+          b.disabled = true;
+          if (b.dataset.id === correctId) b.classList.add('is-correct');
+        });
+        if (btn.dataset.id !== correctId) btn.classList.add('is-incorrect');
+
+        quiz.querySelectorAll('.explain').forEach(function(e){ e.style.display = 'none'; });
+        var explanation = quiz.querySelector('.explain[data-for="' + btn.dataset.id + '"]');
+        if (explanation) explanation.style.display = 'block';
+
+        verdictEl.textContent = (btn.dataset.id === correctId) ? 'Correct.' : 'Not quite.';
+        verdictEl.className = 'verdict ' + ((btn.dataset.id === correctId) ? 'good' : 'bad');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
+
+</body></html>
