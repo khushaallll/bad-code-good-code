@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Patterns — interactive lessons</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens — light (default) ============ */
+  :root{
+    --bg:#F3F4F7;
+    --surface:#FFFFFF;
+    --surface-2:#EAEBF0;
+    --text:#1B1E2A;
+    --text-dim:#5A5F72;
+    --border:#D8DAE2;
+    --teal:#177E70;
+    --teal-soft:#E4F2EF;
+    --rust:#AE3F27;
+    --rust-soft:#F6E7E2;
+    --gold:#95681A;
+    --gold-soft:#F5EDDC;
+    --shadow: 0 1px 2px rgba(20,22,30,0.06);
+    --focus: #2E6DE0;
+    --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161F;
+      --surface:#1C1F2B;
+      --surface-2:#242838;
+      --text:#E7E5DE;
+      --text-dim:#9297AC;
+      --border:#323649;
+      --teal:#4FB8A6;
+      --teal-soft:#1D3833;
+      --rust:#D9714F;
+      --rust-soft:#3A2620;
+      --gold:#D6A552;
+      --gold-soft:#3A3220;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+      --focus:#6FA0FF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161F;
+    --surface:#1C1F2B;
+    --surface-2:#242838;
+    --text:#E7E5DE;
+    --text-dim:#9297AC;
+    --border:#323649;
+    --teal:#4FB8A6;
+    --teal-soft:#1D3833;
+    --rust:#D9714F;
+    --rust-soft:#3A2620;
+    --gold:#D6A552;
+    --gold-soft:#3A3220;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    --focus:#6FA0FF;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-ui);
+    line-height:1.6;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal);}
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .wrap{
+    max-width:960px;
+    margin:0 auto;
+    padding:4rem 1.5rem 5rem 1.5rem;
+  }
+
+  .kicker{
+    color:var(--teal);
+    font-weight:600;
+    font-size:0.95rem;
+    margin-bottom:0.6rem;
+  }
+  h1{
+    font-size:2.4rem;
+    font-weight:700;
+    line-height:1.2;
+    margin:0 0 0.6rem 0;
+  }
+  .sub{
+    color:var(--text-dim);
+    font-size:1.05rem;
+    max-width:62ch;
+    margin:0 0 3rem 0;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:1rem;
+  }
+  .pattern-card{
+    display:flex;
+    flex-direction:column;
+    gap:0.4rem;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.5em;
+    text-decoration:none;
+    color:var(--text);
+    box-shadow:var(--shadow);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .pattern-card:hover{ border-color:var(--teal); transform:translateY(-1px); }
+  .pattern-card .n{
+    font-family:var(--font-code);
+    font-size:0.78rem;
+    color:var(--text-dim);
+  }
+  .pattern-card h2{
+    font-size:1.2rem;
+    font-weight:600;
+    margin:0;
+  }
+  .pattern-card p{
+    color:var(--text-dim);
+    font-size:0.9rem;
+    margin:0;
+  }
+
+  footer{
+    margin-top:4rem;
+    color:var(--text-dim);
+    font-size:0.85rem;
+  }
+  footer a{ color:var(--text-dim); }
+
+  @media (max-width: 600px){
+    .wrap{ padding:2.6rem 1.2rem 3rem 1.2rem; }
+    h1{ font-size:1.9rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="kicker">Bad code / good code</div>
+    <h1>Design Patterns, interactively</h1>
+    <p class="sub">Six patterns, each rebuilt from a real production problem in Python — with checkpoints along the way. Pick one to start.</p>
+
+    <nav class="grid" aria-label="Lessons">
+      <a class="pattern-card" href="1-strategy-pattern-lesson.html">
+        <span class="n">01</span>
+        <h2>Strategy</h2>
+        <p>Swap interchangeable behavior.</p>
+      </a>
+      <a class="pattern-card" href="2-factory-method-lesson.html">
+        <span class="n">02</span>
+        <h2>Factory Method</h2>
+        <p>Swap which class gets built.</p>
+      </a>
+      <a class="pattern-card" href="3-singleton-method-lesson.html">
+        <span class="n">03</span>
+        <h2>Singleton</h2>
+        <p>Guarantee a single shared instance.</p>
+      </a>
+      <a class="pattern-card" href="4-adapter-method-lesson.html">
+        <span class="n">04</span>
+        <h2>Adapter</h2>
+        <p>Make an incompatible class fit.</p>
+      </a>
+      <a class="pattern-card" href="5-decorator-method-lesson.html">
+        <span class="n">05</span>
+        <h2>Decorator</h2>
+        <p>Stack behavior without subclass explosion.</p>
+      </a>
+      <a class="pattern-card" href="6-observer-method-lesson.html">
+        <span class="n">06</span>
+        <h2>Observer</h2>
+        <p>Announce change to interested listeners.</p>
+      </a>
+    </nav>
+
+    <footer>bad-code-good-code — design pattern lessons.</footer>
+  </div>
+</body>
+</html>
