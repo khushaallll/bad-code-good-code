@@ -1,0 +1,1067 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Singleton Pattern</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #F6F7F5;
+    --surface: #FFFFFF;
+    --surface-alt: #ECF1ED;
+    --ink: #14201C;
+    --ink-soft: #4B5A54;
+    --ink-faint: #7C8C84;
+    --border: #D8DED9;
+    --accent: #1F6F5C;
+    --accent-ink: #0F4D3F;
+    --accent-soft: #E3F1EC;
+    --bad: #A93C2C;
+    --bad-soft: #FBEAE6;
+    --gold: #A9781F;
+    --gold-soft: #F5EBD6;
+    --code-bg: #121B18;
+    --code-ink: #E4E9E5;
+    --code-comment: #7C8C84;
+    --code-keyword: #7FD9BE;
+    --code-string: #E0B15C;
+    --code-decorator: #E0B15C;
+    --code-number: #C7E3D8;
+    --radius: 10px;
+    --font-display: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1613;
+      --surface: #15211C;
+      --surface-alt: #1B2822;
+      --ink: #E7ECE8;
+      --ink-soft: #A3B3AB;
+      --ink-faint: #6F8079;
+      --border: #2A3730;
+      --accent: #4FCBA8;
+      --accent-ink: #B7ECDA;
+      --accent-soft: #16332A;
+      --bad: #E2857A;
+      --bad-soft: #38201C;
+      --gold: #E0B15C;
+      --gold-soft: #332A17;
+      --code-bg: #0B100E;
+      --code-ink: #E7ECE8;
+      --code-comment: #7C8C84;
+      --code-keyword: #7FD9BE;
+      --code-string: #E0B15C;
+      --code-decorator: #E0B15C;
+      --code-number: #A9D9C7;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0E1613;
+    --surface: #15211C;
+    --surface-alt: #1B2822;
+    --ink: #E7ECE8;
+    --ink-soft: #A3B3AB;
+    --ink-faint: #6F8079;
+    --border: #2A3730;
+    --accent: #4FCBA8;
+    --accent-ink: #B7ECDA;
+    --accent-soft: #16332A;
+    --bad: #E2857A;
+    --bad-soft: #38201C;
+    --gold: #E0B15C;
+    --gold-soft: #332A17;
+    --code-bg: #0B100E;
+    --code-ink: #E7ECE8;
+    --code-comment: #7C8C84;
+    --code-keyword: #7FD9BE;
+    --code-string: #E0B15C;
+    --code-decorator: #E0B15C;
+    --code-number: #A9D9C7;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.65;
+    padding-inline: 0;
+  }
+
+  a { color: var(--accent-ink); }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .wrap { max-width: 720px; margin-inline: auto; padding-inline: 20px; }
+  .wrap-wide { max-width: 880px; margin-inline: auto; padding-inline: 20px; }
+
+  /* ---------- Nav ---------- */
+  .toc {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 50;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .toc-inner {
+    max-width: 880px;
+    margin-inline: auto;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 10px 20px;
+    scrollbar-width: none;
+  }
+  .toc-inner::-webkit-scrollbar { display: none; }
+  .toc a {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    color: var(--ink-soft);
+    padding: 6px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .toc a.active { color: var(--accent-ink); background: var(--accent-soft); border-color: var(--accent); }
+
+  /* ---------- Hero ---------- */
+  .hero { padding-block: 48px 32px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: var(--surface);
+  }
+  .badge.accent { color: var(--accent-ink); border-color: var(--accent); background: var(--accent-soft); }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(38px, 8vw, 58px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  /* ---------- Section chrome ---------- */
+  .section { padding-block: 44px; border-top: 1px solid var(--border); }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .eyebrow .num { font-weight: 600; }
+  h2.h {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(24px, 4.5vw, 32px);
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  h3.h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 20px;
+    margin: 28px 0 10px;
+  }
+  p { margin: 0 0 14px; max-width: 66ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 66ch; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 600; }
+
+  .term {
+    background: var(--gold-soft);
+    color: var(--ink);
+    border-bottom: 1px dashed var(--gold);
+    padding: 0 2px;
+    font-weight: 500;
+  }
+
+  code.inline {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  /* ---------- Callouts ---------- */
+  .callout {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin: 18px 0;
+    max-width: 66ch;
+  }
+  .callout-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .callout.pythonic { border-left: 3px solid var(--accent); }
+  .callout.pythonic .callout-label { color: var(--accent-ink); }
+  .callout.smell { border-left: 3px solid var(--gold); background: var(--gold-soft); }
+  .callout.smell .callout-label { color: var(--gold); }
+  .callout.warn { border-left: 3px solid var(--bad); background: var(--bad-soft); }
+  .callout.warn .callout-label { color: var(--bad); }
+
+  /* ---------- Code blocks ---------- */
+  .code-frame {
+    margin: 16px 0 20px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    max-width: 100%;
+  }
+  .code-frame.wide { max-width: none; }
+  .code-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface-alt);
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-head .dots { display: flex; gap: 5px; }
+  .code-head .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border); display: inline-block; }
+  .code-frame.bad .code-head { color: var(--bad); }
+  .code-frame.good .code-head { color: var(--accent-ink); }
+  pre.code {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  pre.code code { font-family: inherit; }
+  .tk-c { color: var(--code-comment); font-style: italic; }
+  .tk-s { color: var(--code-string); }
+  .tk-k { color: var(--code-keyword); font-weight: 600; }
+  .tk-d { color: var(--code-decorator); }
+  .tk-n { color: var(--code-number); }
+
+  .why-bad {
+    border-left: 3px solid var(--bad);
+    background: var(--bad-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 16px;
+    margin: 4px 0 20px;
+    max-width: 66ch;
+  }
+  .why-bad .callout-label { color: var(--bad); }
+
+  /* ---------- MCQ ---------- */
+  .mcq {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin: 22px 0;
+    max-width: 66ch;
+  }
+  .mcq-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-ink);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .mcq-q { font-weight: 600; margin-bottom: 14px; }
+  .mcq-options { display: flex; flex-direction: column; gap: 8px; }
+  .mcq-opt {
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    background: var(--surface-alt);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  .mcq-opt:hover:not([disabled]) { border-color: var(--accent); }
+  .mcq-opt.correct { background: var(--accent-soft); border-color: var(--accent); }
+  .mcq-opt.incorrect { background: var(--bad-soft); border-color: var(--bad); }
+  .mcq-opt[disabled] { cursor: default; opacity: 0.92; }
+  .mcq-feedback {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    font-size: 14.5px;
+  }
+  .mcq-feedback .verdict { font-weight: 700; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .mcq-feedback .verdict.right { color: var(--accent-ink); }
+  .mcq-feedback .verdict.wrong { color: var(--bad); }
+
+  /* ---------- Reveal / details ---------- */
+  details.reveal {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    margin: 20px 0;
+    max-width: 66ch;
+    overflow: hidden;
+  }
+  details.reveal summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 13px 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  details.reveal summary::-webkit-details-marker { display: none; }
+  details.reveal summary::before {
+    content: "+";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  details.reveal[open] summary::before { content: "\2212"; }
+  details.reveal[open] summary { border-bottom: 1px solid var(--border); }
+  .reveal-body { padding: 16px; font-size: 14.5px; }
+  .reveal-body p:last-child { margin-bottom: 0; }
+
+  /* ---------- Diagram ---------- */
+  .diagram-frame {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px;
+    overflow-x: auto;
+    margin: 18px 0;
+  }
+  pre.mermaid { margin: 0; }
+
+  /* ---------- Real world cards ---------- */
+  .domain-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 18px 0 8px;
+  }
+  @media (max-width: 640px) { .domain-grid { grid-template-columns: 1fr; } }
+  .domain-card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .domain-card .dtag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .domain-card h4 {
+    font-family: var(--font-display);
+    font-size: 17px;
+    margin: 0 0 8px;
+  }
+  .domain-card p { font-size: 14px; margin-bottom: 10px; }
+  .domain-card code.inline { display: inline-block; margin-top: 2px; }
+
+  /* ---------- Comparison table ---------- */
+  .cmp-scroll { overflow-x: auto; margin: 18px 0; }
+  table.cmp {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 480px;
+    font-size: 14px;
+  }
+  table.cmp th, table.cmp td {
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.cmp th {
+    background: var(--surface-alt);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- Cheat sheet ---------- */
+  .cheat {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    max-width: 66ch;
+  }
+  .cheat dl { margin: 0; }
+  .cheat dt {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-ink);
+    font-weight: 700;
+    margin-top: 14px;
+  }
+  .cheat dt:first-child { margin-top: 0; }
+  .cheat dd { margin: 4px 0 0; }
+
+  /* ---------- Exercise ---------- */
+  .exercise {
+    border: 1px dashed var(--accent);
+    border-radius: var(--radius);
+    padding: 20px;
+    max-width: 66ch;
+    background: var(--surface);
+  }
+  .exercise h3.h3 { margin-top: 0; }
+  .exercise ul { margin-bottom: 0; }
+
+  footer.foot {
+    padding-block: 40px 60px;
+    text-align: center;
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+</style>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#problem">01 Problem</a>
+    <a href="#bad-code">02 Bad Code</a>
+    <a href="#build-fix">03 Build It</a>
+    <a href="#real-world">04 Real World</a>
+    <a href="#trade-offs">05 Trade-offs</a>
+    <a href="#practice">06 Practice</a>
+    <a href="#summary">07 Summary</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="badges">
+      <span class="badge accent">Creational pattern</span>
+      <span class="badge">Lesson 3 of 6</span>
+      <span class="badge">~20 min</span>
+    </div>
+    <h1 class="title">Singleton</h1>
+    <p class="lede">Make sure a class can only ever have one object in memory, and give every part of your program the same way to reach that one object.</p>
+  </header>
+</div>
+
+<!-- ================= 01 PROBLEM ================= -->
+<section class="section" id="problem">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">01</span><span>The problem</span></div>
+    <h2 class="h">One config, read from three places</h2>
+
+    <p>You are building the backend for a checkout service. It has three modules: <code class="inline">payment_service.py</code>, <code class="inline">checkout_service.py</code>, and <code class="inline">shipping_service.py</code>.</p>
+
+    <p>All three need the same settings: the payment provider's API key, a feature flag called <code class="inline">new_tax_engine</code>, and the current environment name (<code class="inline">"staging"</code> or <code class="inline">"production"</code>). These settings live in environment variables, read once at startup.</p>
+
+    <p>A <span class="term">class</span> is a blueprint for creating objects. It defines what data an object holds and what it can do. An <span class="term">instance</span> is one actual object built from that blueprint — if <code class="inline">Config</code> is the blueprint, then <code class="inline">Config()</code> called once produces one instance, sitting at one address in memory.</p>
+
+    <p>The obvious first design: a <code class="inline">Config</code> class. Each module imports it and creates its own instance. That is the version you will look at next, and the version that breaks.</p>
+  </div>
+</section>
+
+<!-- ================= 02 BAD CODE ================= -->
+<section class="section" id="bad-code">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">02</span><span>The bad code</span></div>
+    <h2 class="h">Three modules, three separate configs</h2>
+
+    <p>Here is the first version. <code class="inline">Config</code> reads the environment when it is built. Each module that needs settings just builds its own copy.</p>
+
+    <div class="code-frame bad">
+      <div class="code-head"><span>config.py — version 1</span><span class="dots"><span></span><span></span><span></span></span></div>
+      <pre class="code"><code># config.py
+import os
+
+class Config:
+    def __init__(self):
+        self.api_key = os.environ.get("PAYMENT_API_KEY")
+        self.environment = os.environ.get("APP_ENV", "production")
+        self.new_tax_engine = os.environ.get("NEW_TAX_ENGINE") == "true"</code></pre>
+    </div>
+
+    <div class="code-frame bad">
+      <div class="code-head"><span>three call sites</span><span class="dots"><span></span><span></span><span></span></span></div>
+      <pre class="code"><code># payment_service.py
+from config import Config
+config = Config()  # reads env vars, builds object #1
+
+# checkout_service.py
+from config import Config
+config = Config()  # reads env vars again, builds object #2
+
+# shipping_service.py
+from config import Config
+config = Config()  # reads env vars again, builds object #3</code></pre>
+    </div>
+
+    <div class="why-bad">
+      <span class="callout-label">Why this breaks in production</span>
+      <p style="margin-bottom:10px">Each <code class="inline">Config()</code> call builds a brand new object. The three objects are not linked in any way. Nothing stops them from disagreeing.</p>
+      <p style="margin-bottom:10px">Say an operator flips <code class="inline">NEW_TAX_ENGINE</code> to <code class="inline">"true"</code> mid-deploy, while old and new pods are both running. <code class="inline">payment_service.py</code> might read the flag as off. <code class="inline">checkout_service.py</code>, started a second later, might read it as on. One checkout flow now computes tax two different ways in the same request.</p>
+      <p style="margin-bottom:0">Nothing in the code says these three objects are supposed to be the same thing. The class allows unlimited instances, so the bug is invisible until it fires.</p>
+    </div>
+
+    <div class="mcq">
+      <span class="mcq-tag">Checkpoint</span>
+      <p class="mcq-q">Three files each run <code class="inline">config = Config()</code>. What is the real production risk?</p>
+      <div class="mcq-options">
+        <button class="mcq-opt" data-correct="false" data-explain="Not quite. Python does not stop you from instantiating the same class more than once — that is normal, expected behavior for an ordinary class. Nothing raises here. The danger is silent, not loud.">Python raises an exception the second time <code class="inline">Config()</code> is called.</button>
+        <button class="mcq-opt" data-correct="true" data-explain="This is the real risk. Each object reads the environment independently, at a different moment. If a flag or key changes between those moments, the three objects end up holding different values for what should be one shared setting — and different parts of the same request can behave differently as a result.">If a setting changes mid-deploy, different modules can read different values for what should be one shared setting, at the same moment.</button>
+        <button class="mcq-opt" data-correct="false" data-explain="Extra memory is a real cost, but it is not the dangerous part. Three small config objects cost almost nothing in RAM. The dangerous part is that they can silently disagree with each other, which is a correctness bug, not a performance one.">It only wastes a small amount of memory — as long as the environment variables never change, the three objects always agree, so this is a performance detail rather than a correctness bug.</button>
+        <button class="mcq-opt" data-correct="false" data-explain="Calling a class like <code class='inline'>Config()</code> is completely valid Python — a class is callable by design, and calling it is exactly how you build an instance. No factory function is required for this to work.">This is a syntax error — a class needs a separate factory function before it can be called like <code class="inline">Config()</code>.</button>
+      </div>
+      <div class="mcq-feedback" hidden></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 BUILD IT ================= -->
+<section class="section" id="build-fix">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">03</span><span>Building the fix</span></div>
+    <h2 class="h">Let the class control its own creation</h2>
+
+    <p>The fix is to stop letting the caller decide how many <code class="inline">Config</code> objects exist. Instead, the class decides. Every call to <code class="inline">Config()</code>, from anywhere in the program, should hand back the same object. This is the <strong>Singleton</strong> pattern: a class that guarantees only one instance of itself ever exists, and gives a single, predictable way to reach it.</p>
+
+    <h3 class="h3">Step 1 — override <code class="inline">__new__</code></h3>
+
+    <p>In Python, calling <code class="inline">Config()</code> actually runs two methods in order: <code class="inline">__new__</code>, which builds the raw object, and then <code class="inline">__init__</code>, which sets it up. Most classes never touch <code class="inline">__new__</code> — Python's default version just allocates a fresh object every time. Singleton works by overriding that default, so object creation is no longer automatic.</p>
+
+    <div class="code-frame">
+      <div class="code-head"><span>config.py — step 1, not yet thread-safe</span><span class="dots"><span></span><span></span><span></span></span></div>
+      <pre class="code"><code>class Config:
+    _instance = None  # class attribute: shared by the class, not per-object
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance</code></pre>
+    </div>
+
+    <p>A <span class="term">class attribute</span> belongs to the class itself, not to any one object. <code class="inline">Config._instance</code> is one shared slot, visible to every call to <code class="inline">Config()</code>. The first call finds it empty (<code class="inline">None</code>), builds the real object, and stores it there. Every later call finds it already filled, and just returns what is already there.</p>
+
+    <div class="mcq">
+      <span class="mcq-tag">Checkpoint</span>
+      <p class="mcq-q">Why does <code class="inline">__new__</code> check <code class="inline">if cls._instance is None</code> before building?</p>
+      <div class="mcq-options">
+        <button class="mcq-opt" data-correct="false" data-explain="Overriding __new__ needs no special permission or check — you can override it on any class, any time. The check is not there to satisfy Python; it is there to enforce the one-instance rule.">Without this check, Python would not allow <code class="inline">__new__</code> to be overridden at all.</button>
+        <button class="mcq-opt" data-correct="true" data-explain="This is exactly it. The check stops a second object from being built once one already exists, so every call to Config() after the first one returns the same object instead of a new one.">It stops a second object from being created once one already exists, so <code class="inline">Config()</code> always returns the same object.</button>
+        <button class="mcq-opt" data-correct="false" data-explain="Close, but not quite — and this is a common trap. __new__ only controls whether a new object gets built. It does not stop __init__ from running. __init__ actually runs again on every single call to Config(), even when __new__ hands back the existing object. You will see why that matters in the next exercise.">It prevents <code class="inline">__init__</code> from running more than once.</button>
+        <button class="mcq-opt" data-correct="false" data-explain="This has nothing to do with garbage collection. As long as _instance holds a reference to the object, Python's garbage collector will never remove it — that is true whether or not this check exists.">It is needed so the garbage collector does not delete the object between calls.</button>
+      </div>
+      <div class="mcq-feedback" hidden></div>
+    </div>
+
+    <h3 class="h3">Step 2 — make it safe under concurrent requests</h3>
+
+    <p>A checkout service usually runs many requests at once, often on multiple <span class="term">threads</span> — separate paths of execution running inside the same process, able to run at almost the same moment. Two threads can both call <code class="inline">Config()</code> for the first time at nearly the same instant, before either one has finished setting <code class="inline">_instance</code>.</p>
+
+    <p>This creates a <span class="term">race condition</span>: a bug that only happens because of the exact timing of two things happening at once. Thread A checks <code class="inline">_instance is None</code> and gets <code class="inline">True</code>. Before A finishes building the object, thread B also checks and also gets <code class="inline">True</code>. Now both threads build their own object, and the whole guarantee is broken.</p>
+
+    <p>The fix is a <span class="term">lock</span>: an object that only one thread can hold at a time. Any other thread that tries to acquire a held lock simply waits until it is released. Wrapping the check-and-build step in a lock makes it <span class="term">atomic</span> — meaning no other thread can step in partway through.</p>
+
+    <div class="code-frame good">
+      <div class="code-head"><span>config.py — final, thread-safe version</span><span class="dots"><span></span><span></span><span></span></span></div>
+      <pre class="code"><code># config.py
+"""Application-wide configuration, loaded once from the environment."""
+
+import os
+import threading
+from typing import Optional
+
+
+class Config:
+    """Holds settings read from environment variables.
+
+    Config() always returns the same object. The first call reads
+    the environment and builds it; every later call, from any module,
+    receives that same object back.
+    """
+
+    _instance: Optional["Config"] = None
+    _lock: threading.Lock = threading.Lock()
+
+    def __new__(cls) -&gt; "Config":
+        if cls._instance is None:
+            with cls._lock:
+                # Second check: another thread may have built it
+                # while this thread was waiting for the lock.
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self) -&gt; None:
+        # __init__ runs on every Config() call, even for the
+        # existing instance — so only set up state once.
+        if getattr(self, "_initialized", False):
+            return
+        self.api_key: Optional[str] = os.environ.get("PAYMENT_API_KEY")
+        self.environment: str = os.environ.get("APP_ENV", "production")
+        self.new_tax_engine: bool = os.environ.get("NEW_TAX_ENGINE") == "true"
+        self._initialized = True</code></pre>
+    </div>
+
+    <p>Notice the check appears twice: once before the lock, once inside it. The outer check is a fast path — once <code class="inline">_instance</code> exists, every later call skips the lock entirely, which matters because acquiring a lock has a small cost every time. The inner check, taken while holding the lock, is what actually closes the race: it catches the case where another thread finished building the object while this thread was waiting to get in.</p>
+
+    <p>This two-check shape has a name: <span class="term">double-checked locking</span>. It is worth recognizing by name, because it is a very common thing to be asked to explain or write in an interview.</p>
+
+    <div class="mcq">
+      <span class="mcq-tag">Checkpoint</span>
+      <p class="mcq-q">Two threads call <code class="inline">Config()</code> at the same moment, while <code class="inline">_instance</code> is still <code class="inline">None</code>. Without the lock, what goes wrong?</p>
+      <div class="mcq-options">
+        <button class="mcq-opt" data-correct="false" data-explain="This is a common misreading of the GIL. The GIL (Global Interpreter Lock) stops two threads from executing Python bytecode at the exact same instant, but it switches between threads constantly, including in the middle of a multi-step operation like 'check, then build, then store'. It does not make a sequence of several lines atomic.">Nothing — Python's GIL (Global Interpreter Lock) already makes every multi-line operation like this one thread-safe by itself.</button>
+        <button class="mcq-opt" data-correct="true" data-explain="This is the race condition. Both threads can pass the None check before either one has stored an object in _instance. Each thread then proceeds to build its own object, so two different Config objects get created — breaking the entire guarantee that Config() always returns the same one.">Both threads can pass the <code class="inline">_instance is None</code> check before either one finishes building, so two separate <code class="inline">Config</code> objects get created.</button>
+        <button class="mcq-opt" data-correct="false" data-explain="Python does not detect this situation on its own. There is no automatic error for two threads racing to build an object — that is exactly why the bug is dangerous. It fails silently, not loudly.">The second thread raises a <code class="inline">RuntimeError</code> because the instance already exists.</button>
+        <button class="mcq-opt" data-correct="false" data-explain="This describes what adding a lock achieves, not what happens by default. Without an explicit lock, there is no automatic waiting — both threads simply run the check-then-build steps independently and can both succeed at building an object.">One thread automatically pauses and waits until <code class="inline">_instance</code> is set, even with no explicit lock.</button>
+      </div>
+      <div class="mcq-feedback" hidden></div>
+    </div>
+
+    <h3 class="h3">How it looks from the calling code</h3>
+
+    <div class="diagram-frame">
+      <pre class="mermaid">
+flowchart TD
+    A["payment_service.py<br/>config = Config()"] --> D
+    B["checkout_service.py<br/>config = Config()"] --> D
+    C["shipping_service.py<br/>config = Config()"] --> D
+    D{"Config.__new__<br/>is _instance None?"}
+    D -->|"first caller: yes"| E["acquire lock, build object,<br/>store in Config._instance"]
+    D -->|"later callers: no"| F["skip the lock,<br/>return Config._instance"]
+    E --> G["the one Config object<br/>(same api_key, same flags)"]
+    F --> G
+      </pre>
+    </div>
+
+    <div class="mcq">
+      <span class="mcq-tag">Predict the output</span>
+      <p class="mcq-q">Given the final <code class="inline">Config</code> class above, what does this print?</p>
+    </div>
+
+    <div class="code-frame">
+      <div class="code-head"><span>predict_output.py</span><span class="dots"><span></span><span></span><span></span></span></div>
+      <pre class="code"><code>c1 = Config()
+c1.new_tax_engine = True
+
+c2 = Config()
+print(c2.new_tax_engine)
+print(c1 is c2)</code></pre>
+    </div>
+
+    <details class="reveal">
+      <summary>Reveal the answer</summary>
+      <div class="reveal-body">
+        <p><code class="inline">True</code>, then <code class="inline">True</code>.</p>
+        <p><code class="inline">c1</code> and <code class="inline">c2</code> are two variable names pointing at the exact same object. Setting <code class="inline">c1.new_tax_engine = True</code> changes that one object. When <code class="inline">c2</code> is built, <code class="inline">__new__</code> hands back that same object rather than building a new one, so <code class="inline">c2.new_tax_engine</code> already reads <code class="inline">True</code>. The <code class="inline">is</code> operator checks whether two names point at the same object in memory — here, they do.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 04 REAL WORLD ================= -->
+<section class="section" id="real-world">
+  <div class="wrap-wide">
+    <div class="eyebrow"><span class="num">04</span><span>Real world</span></div>
+    <h2 class="h">You have already used this pattern</h2>
+
+    <p>Singleton shows up constantly in real systems, usually for the same reason as the config example: something needs to be read the same way, and stay in sync, everywhere it is used.</p>
+
+    <div class="domain-grid">
+      <div class="domain-card">
+        <span class="dtag">Logging pipeline</span>
+        <h4>logging.getLogger</h4>
+        <p>Python's built-in <code class="inline">logging</code> module keeps an internal registry of loggers by name. Calling <code class="inline">logging.getLogger("checkout")</code> from ten different files all returns the exact same <code class="inline">Logger</code> object.</p>
+        <p style="margin-bottom:0">That is what lets you set the log level once, from anywhere, and have every module's log calls respect it — because they are all writing through the same object.</p>
+        <code class="inline">log = logging.getLogger("checkout")</code>
+      </div>
+      <div class="domain-card">
+        <span class="dtag">Persistence layer</span>
+        <h4>One shared connection pool</h4>
+        <p>A database connection is expensive to open. Real services create one connection pool — for example a SQLAlchemy <code class="inline">Engine</code> — at startup, and every request borrows a connection from that same pool.</p>
+        <p style="margin-bottom:0">If each request built its own pool instead, the database would quickly run out of connections under load. One shared instance is not an optimization here — it is a requirement.</p>
+        <code class="inline">engine = get_engine()</code>
+      </div>
+    </div>
+
+    <div class="callout pythonic">
+      <span class="callout-label">You already used this, without naming it</span>
+      <p style="margin-bottom:0">Every Python <em>module</em> is already a Singleton. The first time anything does <code class="inline">import config</code>, Python runs the file top to bottom and caches the resulting module object in <code class="inline">sys.modules</code>. Every later <code class="inline">import config</code>, anywhere in the program, returns that exact same cached object instead of re-running the file. That is the same one-object guarantee Singleton gives a class — built into the language itself.</p>
+    </div>
+
+    <h3 class="h3">A more Pythonic way to write it</h3>
+    <p>The <code class="inline">__new__</code> override above is the classic version, and it is worth knowing because it is the version most often asked for in interviews. In real Python codebases, the same guarantee is often written more simply, using a <span class="term">decorator</span> — a function that wraps another function to add behavior to it without changing its code.</p>
+
+    <div class="code-frame">
+      <div class="code-head"><span>config.py — functools.lru_cache version</span><span class="dots"><span></span><span></span><span></span></span></div>
+      <pre class="code"><code>from functools import lru_cache
+
+class Config:
+    def __init__(self) -&gt; None:
+        self.api_key = os.environ.get("PAYMENT_API_KEY")
+        self.environment = os.environ.get("APP_ENV", "production")
+
+@lru_cache(maxsize=1)
+def get_config() -&gt; Config:
+    """Return the one shared Config, building it on first call."""
+    return Config()</code></pre>
+    </div>
+
+    <p><code class="inline">lru_cache(maxsize=1)</code> remembers the return value of the first call to <code class="inline">get_config()</code> and hands back that same cached value on every later call, instead of running the function body again. The class itself stays ordinary. Calling code writes <code class="inline">get_config()</code> instead of <code class="inline">Config()</code>, which also makes it visually obvious that something shared is being fetched, rather than a fresh object being built.</p>
+  </div>
+</section>
+
+<!-- ================= 05 TRADE-OFFS ================= -->
+<section class="section" id="trade-offs">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">05</span><span>Trade-offs</span></div>
+    <h2 class="h">When Singleton is the wrong call</h2>
+
+    <p>Singleton creates <span class="term">global state</span>: data that any part of the program can reach and change, from anywhere, without it showing up as a parameter. That is exactly what makes it useful for something like config. It is also exactly what makes it dangerous for the wrong kind of data.</p>
+
+    <div class="callout warn">
+      <span class="callout-label">Overuse example</span>
+      <p style="margin-bottom:0">Imagine making <code class="inline">ShoppingCart</code> a Singleton, the same way as <code class="inline">Config</code>. There should be one cart <em>per user</em>, not one for the entire running application. Built as a Singleton, every user's <code class="inline">add_item()</code> call would land in the exact same cart object — one customer would see another customer's items. The pattern is only correct when "exactly one, for the whole program" is actually true of the thing being modeled. A cart fails that test; config passes it.</p>
+    </div>
+
+    <p>Two more costs are worth naming directly:</p>
+    <ul>
+      <li><strong>Hidden dependencies.</strong> A function that calls <code class="inline">get_config()</code> internally does not show that dependency in its signature. Reading <code class="inline">def calculate_tax(order):</code> does not tell you it secretly also depends on <code class="inline">Config</code>.</li>
+      <li><strong>Harder testing.</strong> To test <code class="inline">calculate_tax</code> with the tax engine flag both on and off, you now have to reach in and mutate the shared <code class="inline">Config</code> object between tests, and reset it afterward — instead of just passing a different value in.</li>
+    </ul>
+
+    <p>The usual fix, when this pain shows up, is <span class="term">dependency injection</span>: instead of a function reaching for the shared instance itself, the caller passes it in explicitly — <code class="inline">calculate_tax(order, config)</code> rather than <code class="inline">calculate_tax(order)</code>. You still build <code class="inline">Config</code> as a Singleton once, at startup, and hand that same object to whatever needs it. You just stop letting code fetch it invisibly from the inside.</p>
+
+    <h3 class="h3">Singleton vs. a plain global variable</h3>
+    <p>These are often confused, especially in Python, where a module is already a Singleton by construction.</p>
+
+    <div class="cmp-scroll">
+      <table class="cmp">
+        <thead>
+          <tr><th>Plain global variable</th><th>Singleton class</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A module-level name like <code class="inline">config = Config()</code>, built once, at import time.</td>
+            <td>A class that actively refuses to build a second instance, no matter how many times it is called.</td>
+          </tr>
+          <tr>
+            <td>Nothing stops another file from writing <code class="inline">config = Config()</code> again, creating a second object under the same name in a different module.</td>
+            <td>Every <code class="inline">Config()</code> call, anywhere, is guaranteed to return the same object — the uniqueness is enforced by the class itself, not by convention.</td>
+          </tr>
+          <tr>
+            <td>Simple, and often enough — many real Python codebases use exactly this.</td>
+            <td>Worth the extra code only when several different files might construct the object, and the single-instance rule must hold no matter who writes it.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>One-line rule:</strong> reach for a plain module-level global first; reach for the full Singleton class only when you cannot trust every call site to just reuse the existing object on its own.</p>
+  </div>
+</section>
+
+<!-- ================= 06 PRACTICE ================= -->
+<section class="section" id="practice">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">06</span><span>Practice</span></div>
+    <h2 class="h">Spot the bug</h2>
+
+    <p>This version compiles and runs. It has a real bug, and it is a famous one for this pattern. Find it before revealing the answer.</p>
+
+    <div class="code-frame bad">
+      <div class="code-head"><span>config.py — broken</span><span class="dots"><span></span><span></span><span></span></span></div>
+      <pre class="code"><code>class Config:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        self.api_key = os.environ.get("PAYMENT_API_KEY")
+        self.new_tax_engine = os.environ.get("NEW_TAX_ENGINE") == "true"
+        self.request_count = 0
+
+# elsewhere in the program:
+c1 = Config()
+c1.request_count += 1
+c1.request_count += 1
+# ... later, in a completely different module:
+c2 = Config()
+print(c2.request_count)</code></pre>
+    </div>
+
+    <details class="reveal">
+      <summary>Reveal the bug</summary>
+      <div class="reveal-body">
+        <p>This prints <code class="inline">0</code>, not <code class="inline">2</code>, even though <code class="inline">c1</code> and <code class="inline">c2</code> are the same object.</p>
+        <p><code class="inline">__new__</code> only controls whether a <em>new</em> object gets built. It says nothing about <code class="inline">__init__</code>. Python calls <code class="inline">__init__</code> on <em>every</em> <code class="inline">Config()</code> call, including calls that receive the existing, already-built object. So building <code class="inline">c2</code> runs <code class="inline">__init__</code> again on the same object, and <code class="inline">self.request_count = 0</code> silently resets the counter <code class="inline">c1</code> had already incremented to <code class="inline">2</code>.</p>
+        <p style="margin-bottom:0">The fix is the guard used in the working version earlier in this lesson: check a flag like <code class="inline">self._initialized</code> at the top of <code class="inline">__init__</code>, and return immediately if it is already set, so setup logic only ever runs once, no matter how many times <code class="inline">Config()</code> is called.</p>
+      </div>
+    </details>
+
+    <div class="exercise">
+      <h3 class="h3">Your turn — MetricsCollector</h3>
+      <p>A data pipeline has several stages: <code class="inline">extract.py</code>, <code class="inline">transform.py</code>, and <code class="inline">load.py</code>. Each stage needs to report timing and row-count metrics as it runs — for example, "extract took 4.2s and produced 10,000 rows."</p>
+      <p>Build a <code class="inline">MetricsCollector</code> class as a Singleton, so that all three stages report into the same in-memory list of events, and a single <code class="inline">flush()</code> call at the end of the pipeline can send everything collected, from every stage, in one batch.</p>
+      <ul>
+        <li>Use the <code class="inline">__new__</code> override, with the double-checked lock, exactly as shown earlier in this lesson.</li>
+        <li>Give it a <code class="inline">record(stage: str, seconds: float, rows: int) -&gt; None</code> method that appends an event.</li>
+        <li>Give it a <code class="inline">flush() -&gt; list</code> method that returns all collected events and clears the internal list.</li>
+        <li>Remember the bug from the exercise above: make sure the internal event list is only created once, not reset on every <code class="inline">MetricsCollector()</code> call.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 07 SUMMARY ================= -->
+<section class="section" id="summary">
+  <div class="wrap">
+    <div class="eyebrow"><span class="num">07</span><span>Summary</span></div>
+    <h2 class="h">Cheat sheet</h2>
+
+    <div class="cheat">
+      <dl>
+        <dt>Problem it solves</dt>
+        <dd>Guarantees a class has exactly one instance, reachable the same way from anywhere in the program.</dd>
+        <dt>Core idea</dt>
+        <dd>The class controls its own creation, through <code class="inline">__new__</code>, and hands back the same stored object on every call instead of building a new one.</dd>
+        <dt>Trade-off</dt>
+        <dd>Introduces global, mutable state — which hides dependencies between modules and makes tests harder to isolate.</dd>
+        <dt>Smell that tells you to reach for it</dt>
+        <dd>Several unrelated files would each independently build "the config" / "the connection pool" / "the logger" — and they must, without question, all share the exact same state.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><footer class="foot">Singleton — Design Patterns in Python · Lesson 3 of 6</footer></div>
+
+<script>
+(function () {
+  // ---- Python-ish syntax highlighting for code blocks ----
+  var KEYWORDS = "def|class|return|if|elif|else|not|is|in|and|or|None|True|False|import|from|as|with|raise|self|cls|try|except|finally|while|for|pass|break|continue|lambda|yield|global|assert|async|await";
+  var tokenRegex = new RegExp(
+    "(#.*$)" +
+    "|(\"\"\"[\\s\\S]*?\"\"\"|'''[\\s\\S]*?'''|\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*')" +
+    "|(@[A-Za-z_][A-Za-z0-9_]*)" +
+    "|\\b(" + KEYWORDS + ")\\b" +
+    "|\\b(\\d+\\.?\\d*)\\b",
+    "gm"
+  );
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function highlight(raw) {
+    var esc = escapeHtml(raw);
+    return esc.replace(tokenRegex, function (m, c, s, d, k, n) {
+      if (c !== undefined) return '<span class="tk-c">' + c + "</span>";
+      if (s !== undefined) return '<span class="tk-s">' + s + "</span>";
+      if (d !== undefined) return '<span class="tk-d">' + d + "</span>";
+      if (k !== undefined) return '<span class="tk-k">' + k + "</span>";
+      if (n !== undefined) return '<span class="tk-n">' + n + "</span>";
+      return m;
+    });
+  }
+
+  try {
+    document.querySelectorAll("pre.code code").forEach(function (el) {
+      el.innerHTML = highlight(el.textContent);
+    });
+  } catch (e) {}
+
+  // ---- MCQ interactivity ----
+  document.querySelectorAll(".mcq").forEach(function (mcq) {
+    var feedback = mcq.querySelector(".mcq-feedback");
+    var options = mcq.querySelectorAll(".mcq-opt");
+    if (!options.length) return;
+    var answered = false;
+    options.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (answered) return;
+        answered = true;
+        var isCorrect = btn.getAttribute("data-correct") === "true";
+        options.forEach(function (b) {
+          b.disabled = true;
+          if (b.getAttribute("data-correct") === "true") {
+            b.classList.add("correct");
+          } else if (b === btn) {
+            b.classList.add("incorrect");
+          }
+        });
+        var verdictClass = isCorrect ? "right" : "wrong";
+        var verdictText = isCorrect ? "Correct" : "Not quite";
+        feedback.innerHTML =
+          '<span class="verdict ' + verdictClass + '">' + verdictText + "</span><p style=\"margin-top:8px;margin-bottom:0\">" +
+          btn.getAttribute("data-explain") + "</p>";
+        feedback.hidden = false;
+      });
+    });
+  });
+
+  // ---- Active nav highlighting ----
+  try {
+    var sections = document.querySelectorAll(".section[id]");
+    var links = document.querySelectorAll(".toc a");
+    var map = {};
+    links.forEach(function (a) {
+      map[a.getAttribute("href").slice(1)] = a;
+    });
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            links.forEach(function (a) { a.classList.remove("active"); });
+            var a = map[entry.target.id];
+            if (a) a.classList.add("active");
+          }
+        });
+      },
+      { rootMargin: "-35% 0px -55% 0px", threshold: 0 }
+    );
+    sections.forEach(function (s) { observer.observe(s); });
+  } catch (e) {}
+})();
+</script>
+
+<!--claude-mermaid-runtime-begin:3477-->
+<style>.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+<script src="/_runtime/mermaid-11.16.1.min.js"></script>
+<script>(function(){
+var CFG={"palettes":{"light":{"surface":"#f4efe4","text":"#42392e","line":"#8a7f6d","border":"#7a6c52","bg":"#fffdf8"},"dark":{"surface":"#262b34","text":"#f2f3f5","line":"#a8adb8","border":"#9aa4b8","bg":"#1f232b"}}};
+if(typeof mermaid==='undefined')return;
+var pres=Array.prototype.slice.call(document.querySelectorAll('pre.mermaid')).filter(function(p){if(p.hasAttribute('data-claude-mermaid-claimed'))return false;p.setAttribute('data-claude-mermaid-claimed','1');return true;});
+if(!pres.length)return;
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+var root=document.documentElement;
+var items=pres.map(function(pre){
+var mount=document.createElement('div');mount.className='mermaid-diagram';
+return {pre:pre,mount:mount,src:pre.textContent||''};
+});
+var seq=0;
+var renderGen=0;
+var lastKey='';
+function pageBg(fallback){
+var els=[document.body,document.documentElement];
+for(var i=0;i<els.length;i++){
+var c=els[i]&&getComputedStyle(els[i]).backgroundColor;
+if(c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)')return c;
+}
+return fallback;
+}
+function render(){
+var theme=root.getAttribute('data-theme');
+var dark=theme==='dark'||(!!(mq&&mq.matches)&&theme!=='light');
+var pal=dark?CFG.palettes.dark:CFG.palettes.light;
+var bg=pageBg(pal.bg);
+var key=(dark?'d':'l')+'|'+bg;
+if(key===lastKey)return;
+lastKey=key;
+var gen=++renderGen;
+var font=getComputedStyle(document.body).fontFamily||'sans-serif';
+var nat={useMaxWidth:false};
+mermaid.initialize({
+startOnLoad:false,securityLevel:'strict',theme:'base',
+flowchart:nat,sequence:nat,er:nat,state:nat,class:nat,pie:nat,
+gantt:nat,journey:nat,timeline:nat,gitGraph:nat,mindmap:nat,xyChart:nat,
+quadrantChart:nat,sankey:nat,c4:nat,requirement:nat,block:nat,
+packet:nat,kanban:nat,architecture:nat,radar:nat,
+themeVariables:{background:bg,mainBkg:pal.surface,primaryColor:pal.surface,
+primaryTextColor:pal.text,lineColor:pal.line,primaryBorderColor:pal.border,
+nodeBorder:pal.border,clusterBorder:pal.border,edgeLabelBackground:bg,
+clusterBkg:'rgba(127,127,127,0.07)',titleColor:pal.text,
+darkMode:dark,rowOdd:bg,rowEven:'rgba(127,127,127,0.07)',
+attributeBackgroundColorOdd:bg,attributeBackgroundColorEven:'rgba(127,127,127,0.07)',
+fontSize:'16px',fontFamily:font},
+themeCSS:'.node rect, .node circle, .node polygon, .node path, .cluster rect { stroke-width: 2px; }'
+});
+items.forEach(function(it){
+var id='claude-mermaid-'+seq++;
+mermaid.render(id,it.src).then(function(r){
+if(gen!==renderGen)return;
+var prev=it.pre.previousElementSibling;
+if(prev&&prev.className==='mermaid-diagram'&&prev!==it.mount)return;
+it.mount.innerHTML=r.svg;
+if(!it.mount.parentNode)it.pre.parentNode.insertBefore(it.mount,it.pre);
+it.pre.style.display='none';
+},function(){
+var scratch=document.getElementById(id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+scratch=document.getElementById('d'+id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+if(gen!==renderGen)return;
+if(it.mount.parentNode)it.mount.parentNode.removeChild(it.mount);
+it.pre.style.display='';
+});
+});
+}
+render();
+if(mq&&mq.addEventListener)mq.addEventListener('change',render);
+if(typeof MutationObserver!=='undefined')new MutationObserver(render).observe(root,{attributes:true,attributeFilter:['data-theme']});
+})();</script>
+<!--claude-mermaid-runtime-end-->
+
+</body></html>

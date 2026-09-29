@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adapter — an interactive lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens — light (default) ============ */
+  :root{
+    --bg:#F3F4F7;
+    --surface:#FFFFFF;
+    --surface-2:#EAEBF0;
+    --text:#1B1E2A;
+    --text-dim:#5A5F72;
+    --border:#D8DAE2;
+    --teal:#177E70;
+    --teal-soft:#E4F2EF;
+    --rust:#AE3F27;
+    --rust-soft:#F6E7E2;
+    --gold:#95681A;
+    --gold-soft:#F5EDDC;
+    --code-bg:#1B1E2A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(20,22,30,0.06);
+    --focus: #2E6DE0;
+    --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161F;
+      --surface:#1C1F2B;
+      --surface-2:#242838;
+      --text:#E7E5DE;
+      --text-dim:#9297AC;
+      --border:#323649;
+      --teal:#4FB8A6;
+      --teal-soft:#1D3833;
+      --rust:#D9714F;
+      --rust-soft:#3A2620;
+      --gold:#D6A552;
+      --gold-soft:#3A3220;
+      --code-bg:#10121A;
+      --code-text:#E7E5DE;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+      --focus:#6FA0FF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161F;
+    --surface:#1C1F2B;
+    --surface-2:#242838;
+    --text:#E7E5DE;
+    --text-dim:#9297AC;
+    --border:#323649;
+    --teal:#4FB8A6;
+    --teal-soft:#1D3833;
+    --rust:#D9714F;
+    --rust-soft:#3A2620;
+    --gold:#D6A552;
+    --gold-soft:#3A3220;
+    --code-bg:#10121A;
+    --code-text:#E7E5DE;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    --focus:#6FA0FF;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-ui);
+    line-height:1.6;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal);}
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  h1,h2,h3,h4{
+    font-family:var(--font-ui);
+    font-weight:600;
+    line-height:1.25;
+    margin:0 0 0.6em 0;
+  }
+  h1{font-size:2.1rem; font-weight:700;}
+  h2{font-size:1.5rem; letter-spacing:-0.01em;}
+  h3{font-size:1.15rem;}
+  p{margin:0 0 1em 0; max-width:70ch;}
+  ul,ol{margin:0 0 1em 0; padding-left:1.3em;}
+  li{margin-bottom:0.4em;}
+
+  code, pre, .mono{ font-family:var(--font-code); }
+  code{
+    background:var(--surface-2);
+    padding:0.15em 0.4em;
+    border-radius:4px;
+    font-size:0.9em;
+  }
+  pre{
+    background:var(--code-bg);
+    color:var(--code-text);
+    padding:1.1em 1.2em;
+    border-radius:8px;
+    overflow-x:auto;
+    font-size:0.87rem;
+    line-height:1.55;
+    margin:0 0 1em 0;
+    border:1px solid var(--border);
+  }
+  pre code{ background:none; padding:0; font-size:1em; color:inherit; }
+
+  .kw{color:#8FB4E8;}
+  .st{color:#C7D9A0;}
+  .cm{color:#7C8199; font-style:italic;}
+  .fn{color:#E4C07A;}
+  .tp{color:#7FCFC0;}
+  .hl{color:#D6A552;}
+
+  /* ============ Layout shell ============ */
+  .shell{
+    display:flex;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .rail{
+    width:230px;
+    flex-shrink:0;
+    padding:2.2rem 1rem 2rem 1.5rem;
+    position:sticky;
+    top:0;
+    align-self:flex-start;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .rail-title{
+    font-size:0.72rem;
+    color:var(--text-dim);
+    margin:0 0 1rem 0;
+    padding-bottom:0.6rem;
+    border-bottom:1px solid var(--border);
+  }
+  .rail ol{ list-style:none; padding:0; margin:0; }
+  .rail li{ margin:0; }
+  .rail a{
+    display:flex;
+    gap:0.6em;
+    align-items:baseline;
+    text-decoration:none;
+    color:var(--text-dim);
+    font-size:0.86rem;
+    padding:0.42em 0.5em;
+    border-radius:6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .rail a .n{
+    font-family:var(--font-code);
+    font-size:0.78rem;
+    color:var(--text-dim);
+    flex-shrink:0;
+    width:1.4em;
+  }
+  .rail a:hover{ background:var(--surface-2); color:var(--text); }
+  .rail a.active{ color:var(--teal); background:var(--teal-soft); }
+  .rail a.active .n{ color:var(--teal); }
+
+  .topnav{ display:none; }
+
+  main{
+    flex:1;
+    min-width:0;
+    padding:2.4rem 3rem 6rem 3rem;
+  }
+  section{
+    padding-top:1.2rem;
+    margin-bottom:3.2rem;
+    scroll-margin-top:1.5rem;
+  }
+  .eyebrow{
+    color:var(--text-dim);
+    font-size:0.9rem;
+    margin:0 0 0.3em 0;
+  }
+
+  @media (max-width: 980px){
+    .rail{ display:none; }
+    .topnav{
+      display:flex;
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      overflow-x:auto;
+      padding:0.6rem 1rem;
+      gap:0.4rem;
+      -webkit-overflow-scrolling:touch;
+    }
+    .topnav a{
+      flex-shrink:0;
+      font-size:0.8rem;
+      color:var(--text-dim);
+      text-decoration:none;
+      padding:0.35em 0.7em;
+      border-radius:20px;
+      border:1px solid var(--border);
+      white-space:nowrap;
+    }
+    .topnav a.active{ color:var(--teal); border-color:var(--teal); background:var(--teal-soft); }
+    main{ padding:1.6rem 1.2rem 4rem 1.2rem; }
+    h1{ font-size:1.7rem; }
+  }
+
+  /* ============ Header / hero ============ */
+  .hero{
+    padding:2.6rem 0 1rem 0;
+    border-bottom:1px solid var(--border);
+    margin-bottom:2.6rem;
+  }
+  .hero .kicker{
+    color:var(--teal);
+    font-weight:600;
+    font-size:0.95rem;
+    margin-bottom:0.4rem;
+  }
+  .hero h1{ margin-bottom:0.5rem; }
+  .hero .sub{ color:var(--text-dim); font-size:1.05rem; max-width:62ch; }
+
+  .switcher{
+    margin-top:1.8rem;
+    display:flex;
+    gap:1.6rem;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .switcher-buttons{ display:flex; flex-direction:column; gap:0.5rem; }
+  .provider-btn{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:0.6em 1em;
+    font-family:var(--font-ui);
+    font-size:0.92rem;
+    cursor:pointer;
+    text-align:left;
+    box-shadow:var(--shadow);
+  }
+  .provider-btn .dot{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; }
+  .provider-btn.active{ border-color:var(--teal); color:var(--teal); }
+  .provider-btn.active .dot{ background:var(--teal); }
+  .switcher-demo{
+    flex:1;
+    min-width:280px;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.1em 1.3em;
+  }
+  .switcher-demo .line1{ color:#7C8199; font-family:var(--font-code); font-size:0.82rem; margin-bottom:0.5em;}
+  .switcher-demo .line2{ font-family:var(--font-code); font-size:0.95rem; color:var(--code-text); }
+  .switcher-note{ color:var(--text-dim); font-size:0.85rem; margin-top:0.9em; }
+  #swStrategy{ color:#7FCFC0; }
+
+  /* ============ Term definitions ============ */
+  .term{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--teal);
+    border-radius:6px;
+    padding:0.9em 1.1em;
+    margin:0 0 1.1em 0;
+    font-size:0.94rem;
+  }
+  .term .word{ font-weight:600; color:var(--teal); }
+  .term .ex{ color:var(--text-dim); }
+  .term code{ background:var(--surface-2); }
+
+  /* ============ Callouts / cards ============ */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin-bottom:1.3em;
+    box-shadow:var(--shadow);
+  }
+  .card h3{ margin-top:0; }
+  .bad-tag, .good-tag{
+    display:inline-block;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:0.15em 0.6em;
+    border-radius:20px;
+    margin-bottom:0.7em;
+  }
+  .bad-tag{ background:var(--rust-soft); color:var(--rust); }
+  .good-tag{ background:var(--teal-soft); color:var(--teal); }
+  .consequence-list li::marker{ color:var(--rust); }
+  .consequence-list{ background:var(--rust-soft); padding:1em 1.2em 1em 2.1em; border-radius:8px; margin-bottom:1.1em; }
+  .consequence-list li{ color:var(--text); }
+
+  /* ============ Quiz ============ */
+  .quiz{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+    margin:1.6em 0;
+  }
+  .quiz .q-label{ color:var(--gold); font-weight:600; font-size:0.85rem; margin-bottom:0.4em; }
+  .quiz .q-prompt{ font-weight:600; margin-bottom:1em; }
+  .quiz .options{ display:flex; flex-direction:column; gap:0.55em; margin-bottom:0.8em; }
+  .quiz .option{
+    text-align:left;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0.7em 1em;
+    font-family:var(--font-ui);
+    font-size:0.93rem;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .quiz .option:hover:not(:disabled){ border-color:var(--teal); }
+  .quiz .option:disabled{ cursor:default; }
+  .quiz .option.is-correct{ border-color:var(--teal); background:var(--teal-soft); }
+  .quiz .option.is-incorrect{ border-color:var(--rust); background:var(--rust-soft); }
+  .quiz .verdict{ font-weight:600; margin-bottom:0.4em; display:none; }
+  .quiz .verdict.good{ color:var(--teal); display:block; }
+  .quiz .verdict.bad{ color:var(--rust); display:block; }
+  .quiz .explain{ display:none; font-size:0.92rem; color:var(--text-dim); background:var(--surface-2); padding:0.9em 1em; border-radius:8px; }
+
+  /* ============ Details / reveal ============ */
+  details.reveal{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:0.2em 1.4em;
+    margin:1.2em 0;
+  }
+  details.reveal summary{
+    cursor:pointer;
+    padding:0.9em 0;
+    font-weight:600;
+    color:var(--gold);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:0.5em;
+  }
+  details.reveal summary::-webkit-details-marker{ display:none; }
+  details.reveal summary::before{
+    content:"▸";
+    display:inline-block;
+    transition:transform 0.15s;
+    color:var(--gold);
+  }
+  details.reveal[open] summary::before{ transform:rotate(90deg); }
+  details.reveal .reveal-body{ padding:0 0 1.1em 0; border-top:1px solid var(--border); margin-top:0.2em; padding-top:1em; }
+
+  /* ============ Diagram ============ */
+  .diagram-wrap{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.2rem;
+    margin-bottom:1.3em;
+    overflow-x:auto;
+  }
+  .uml-box{ fill:var(--surface-2); stroke:var(--border); stroke-width:1.2; }
+  .uml-box.ctx{ stroke:var(--gold); }
+  .uml-box.iface{ stroke:var(--teal); }
+  .uml-box.vendor{ stroke:var(--rust); stroke-dasharray:3,2; }
+  .uml-text{ fill:var(--text); font-family:var(--font-code); font-size:12px; }
+  .uml-title{ fill:var(--text); font-family:var(--font-ui); font-weight:600; font-size:13px; }
+  .uml-stereotype{ fill:var(--text-dim); font-family:var(--font-ui); font-size:11px; font-style:italic; }
+  .uml-line{ stroke:var(--text-dim); stroke-width:1.3; fill:none; }
+  .uml-line.dashed{ stroke-dasharray:5,4; }
+  .uml-line.holds{ stroke:var(--gold); stroke-width:1.4; }
+  .uml-arrow{ fill:var(--text-dim); }
+  .uml-diamond{ fill:var(--gold); }
+  .uml-label{ fill:var(--gold); font-family:var(--font-ui); font-size:11px; font-weight:600; font-style:italic; }
+
+  /* ============ Domain example grid ============ */
+  .domain-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  @media (max-width:760px){ .domain-grid{ grid-template-columns:1fr; } }
+  .domain-card h4{ color:var(--teal); font-size:0.95rem; margin-bottom:0.5em; }
+
+  /* ============ Comparison table ============ */
+  .compare{ width:100%; border-collapse:collapse; margin-bottom:1em; font-size:0.92rem; }
+  .compare th, .compare td{ border:1px solid var(--border); padding:0.7em 0.9em; text-align:left; vertical-align:top; }
+  .compare th{ background:var(--surface-2); font-weight:600; }
+  .rule-line{
+    background:var(--gold-soft);
+    border-left:3px solid var(--gold);
+    padding:0.8em 1.1em;
+    border-radius:6px;
+    font-size:0.93rem;
+  }
+
+  /* ============ Cheat sheet ============ */
+  .cheat{
+    background:var(--surface);
+    border:1px solid var(--teal);
+    border-radius:12px;
+    padding:1.6em 1.8em;
+  }
+  .cheat dt{ color:var(--teal); font-weight:600; font-size:0.85rem; margin-top:0.9em; }
+  .cheat dt:first-child{ margin-top:0; }
+  .cheat dd{ margin:0.2em 0 0 0; }
+
+  .exercise-box{
+    background:var(--gold-soft);
+    border:1px solid var(--gold);
+    border-radius:10px;
+    padding:1.4em 1.6em;
+  }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:2rem 3rem 3rem 3rem;
+    color:var(--text-dim);
+    font-size:0.85rem;
+    border-top:1px solid var(--border);
+  }
+  @media (max-width: 980px){ footer{ padding:2rem 1.2rem 3rem 1.2rem; } }
+
+  .also-note{
+    background:var(--surface-2);
+    border-radius:8px;
+    padding:0.9em 1.1em;
+    font-size:0.9rem;
+    color:var(--text-dim);
+    margin-bottom:1em;
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav" id="topnav" aria-label="Section navigation"></nav>
+
+<div class="shell">
+  <nav class="rail" aria-label="Lesson sections">
+    <div class="rail-title">Adapter</div>
+    <ol id="railList"></ol>
+  </nav>
+
+  <main>
+    <header class="hero" id="s-hero">
+      <div class="kicker">Design pattern · Adapter</div>
+      <h1>Adapter</h1>
+      <p class="sub">You already know Strategy (swap interchangeable behavior) and Factory Method (swap which
+      class gets built). Adapter answers a different question: what do you do when the class you need to plug in
+      already exists — written by someone else, with a shape you can't change? Pick a logging backend below to
+      see it before we name it.</p>
+
+      <div class="switcher">
+        <div class="switcher-buttons" role="group" aria-label="Choose a logging backend">
+          <button class="provider-btn active" data-provider="console" data-line="sink = ConsoleLogSink()" data-desc="ConsoleLogSink already speaks our LogSink interface directly — no adapting needed.">
+            <span class="dot"></span> Console
+          </button>
+          <button class="provider-btn" data-provider="datadog" data-line="sink = DatadogSinkAdapter(DatadogClient())" data-desc="DatadogClient is a third-party SDK with its own send_event(title, text, tags, alert_type) method — DatadogSinkAdapter translates our calls into that shape.">
+            <span class="dot"></span> Datadog
+          </button>
+          <button class="provider-btn" data-provider="syslog" data-line="sink = SyslogSinkAdapter(LegacySyslog())" data-desc="LegacySyslog is an old library with a numeric-priority emit(priority, line) method — SyslogSinkAdapter translates our calls into that shape.">
+            <span class="dot"></span> Syslog
+          </button>
+        </div>
+        <div class="switcher-demo">
+          <div class="line1">orders_service.py — the code that logs an event</div>
+          <div class="line2"><span id="swStrategy">sink = ConsoleLogSink()</span><br>OrderService(sink).place_order(<span class="st">"A-1001"</span>)</div>
+          <div class="switcher-note" id="swNote">ConsoleLogSink already speaks our <code>LogSink</code> interface directly — no adapting needed.</div>
+        </div>
+      </div>
+      <p class="switcher-note" style="margin-top:1.1em;">Notice what <strong>doesn't</strong> change: <code>OrderService</code> never mentions Datadog or
+      syslog by name. It only ever calls <code>sink.write(...)</code>. That's Adapter.</p>
+    </header>
+
+    <!-- ================= 1. THE PROBLEM ================= -->
+    <section id="s-problem">
+      <p class="eyebrow">1 · The problem</p>
+      <h2>Your services need to log events. Every logging backend speaks a different language.</h2>
+      <p>You're building <code>OrderService</code> for an e-commerce backend. Every time an order is placed, it
+      needs to log that event. Your company already runs two logging systems: Datadog, a commercial monitoring
+      SaaS reached through their Python SDK, and an old internal syslog library that predates the team. Datadog's
+      client wants a <code>send_event(title, text, tags, alert_type)</code> call. The legacy syslog library wants
+      <code>emit(priority, line)</code> — a numeric severity and one preformatted string. You don't own either of
+      these libraries' code, and you can't change their method signatures.</p>
+
+      <div class="term">
+        <span class="word">Coupling</span> — how much one piece of code depends on the specific details of
+        another piece of code. <span class="ex">Example: a function that calls
+        <code>datadog_client.send_event(title=..., text=..., tags=..., alert_type=...)</code> directly is
+        <em>tightly coupled</em> to Datadog's exact method name and argument shape — swap the backend, and every
+        call site built around that shape breaks.</span>
+      </div>
+
+      <p>Here's the first version, written when Datadog and syslog both had to be supported from day one.</p>
+    </section>
+
+    <!-- ================= 2. BAD EXAMPLE ================= -->
+    <section id="s-bad">
+      <p class="eyebrow">2 · The naive version</p>
+      <h2>One class, wired directly to two incompatible vendor APIs</h2>
+      <div class="card">
+        <span class="bad-tag">Works, until a third backend or a second call site shows up</span>
+        <pre><code><span class="cm"># vendor SDKs — code you don't own, can't change</span>
+<span class="kw">class</span> <span class="fn">DatadogClient</span>:
+    <span class="kw">def</span> <span class="fn">send_event</span>(<span class="kw">self</span>, title, text, tags, alert_type):
+        ...  <span class="cm"># calls Datadog's real API</span>
+
+<span class="kw">class</span> <span class="fn">LegacySyslog</span>:
+    <span class="kw">def</span> <span class="fn">emit</span>(<span class="kw">self</span>, priority, line):
+        ...  <span class="cm"># writes to the syslog daemon</span>
+
+
+<span class="cm"># our code</span>
+<span class="kw">class</span> <span class="fn">BadOrderService</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, datadog: DatadogClient, syslog: LegacySyslog) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._datadog = datadog
+        <span class="kw">self</span>._syslog = syslog
+
+    <span class="kw">def</span> <span class="fn">place_order</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._datadog.send_event(
+            title=<span class="st">"orders: INFO"</span>,
+            text=<span class="st">f"order {order_id} placed"</span>,
+            tags=[<span class="st">"service:orders"</span>, <span class="st">"level:info"</span>],
+            alert_type=<span class="st">"info"</span>,
+        )
+        <span class="kw">self</span>._syslog.emit(<span class="hl">6</span>, <span class="st">f"orders order {order_id} placed"</span>)</code></pre>
+
+        <p>Ran once, it prints correctly:</p>
+        <pre><code>[datadog] INFO | orders: INFO | order A-1001 placed | tags=['service:orders', 'level:info']
+[syslog] &lt;6&gt; orders order A-1001 placed</code></pre>
+
+        <p>But here's exactly what this costs you:</p>
+        <ul class="consequence-list">
+          <li><code>BadOrderService</code> has to know both <code>send_event</code>'s keyword arguments and <code>emit</code>'s numeric priority scheme. That's two vendor-specific formats memorized inside one class that's supposed to be about placing orders.</li>
+          <li>A third service — say, <code>BillingService</code> — needs the exact same two log calls. Copy this logic in, and now the Datadog argument order and the syslog priority-6-means-info mapping are duplicated in two places. Datadog changes <code>alert_type</code>'s allowed values, and you have to find and fix every call site.</li>
+          <li>Add a third backend, like shipping logs to Kafka, and every class that logs — <code>OrderService</code>, <code>BillingService</code>, and whatever comes next — needs a third block of vendor-specific code added by hand.</li>
+          <li>You can't unit-test <code>place_order</code>'s logging behavior without either running a real Datadog client or writing a mock that knows Datadog's exact keyword arguments — there's no shared, simple interface to fake.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= 3. TRANSFORM STEP BY STEP ================= -->
+    <section id="s-transform">
+      <p class="eyebrow">3 · Building the fix, one step at a time</p>
+      <h2>From vendor calls inline to one shared logging interface</h2>
+
+      <h3>Step 1 — pull each vendor call into its own function</h3>
+      <p>The smallest useful move: stop calling <code>datadog.send_event(...)</code> and <code>syslog.emit(...)</code>
+      inline, and call a function instead.</p>
+      <pre><code><span class="kw">def</span> <span class="fn">send_to_datadog</span>(client: DatadogClient, level: <span class="tp">str</span>, message: <span class="tp">str</span>, service: <span class="tp">str</span>) -> <span class="tp">None</span>:
+    client.send_event(
+        title=<span class="st">f"{service}: {level}"</span>,
+        text=message,
+        tags=[<span class="st">f"service:{service}"</span>, <span class="st">f"level:{level.lower()}"</span>],
+        alert_type=level.lower(),
+    )
+
+<span class="kw">def</span> <span class="fn">send_to_syslog</span>(syslog: LegacySyslog, level: <span class="tp">str</span>, message: <span class="tp">str</span>, service: <span class="tp">str</span>) -> <span class="tp">None</span>:
+    priority = <span class="hl">3</span> <span class="kw">if</span> level == <span class="st">"ERROR"</span> <span class="kw">else</span> <span class="hl">6</span>
+    syslog.emit(priority, <span class="st">f"{service} {message}"</span>)</code></pre>
+      <p>Both functions now take the same three logical arguments — <code>level</code>, <code>message</code>,
+      <code>service</code> — and translate them into whatever <code>DatadogClient</code> or <code>LegacySyslog</code>
+      actually needs. This already removes the duplication problem. But <code>OrderService</code> would still
+      have to import both functions and call whichever one matches the backend it was given — the caller still
+      has to know which function goes with which vendor object. Adapter finishes the job: it makes every backend
+      look like the exact same type from the caller's point of view.</p>
+
+      <h3>Step 2 — name the shape our code actually wants to call</h3>
+      <div class="term">
+        <span class="word">Interface</span> — a contract that says which methods a class must provide, without
+        saying how they work. <span class="ex">Example: "anything that claims to be a log sink must have a
+        <code>write(record)</code> method" — that's the whole contract.</span>
+      </div>
+      <div class="term">
+        <span class="word">Target interface</span> — in Adapter specifically, the interface that the calling code
+        already expects and was written against. <span class="ex">Example: <code>LogSink</code> below is the
+        target interface — it's the only logging shape <code>OrderService</code> will ever be written to call.</span>
+      </div>
+      <p>In Python, you write an interface with <code>abc.ABC</code> (Abstract Base Class) and
+      <code>@abstractmethod</code>. A class that inherits from it without implementing every abstract method
+      can't be instantiated.</p>
+      <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="kw">@dataclass</span>(frozen=<span class="kw">True</span>)
+<span class="kw">class</span> <span class="fn">LogRecord</span>:
+    <span class="cm">"""One log event, in our application's own vocabulary."""</span>
+    level: <span class="tp">str</span>
+    message: <span class="tp">str</span>
+    service: <span class="tp">str</span>
+
+<span class="kw">class</span> <span class="fn">LogSink</span>(ABC):
+    <span class="cm">"""Target interface: the only logging API our services know."""</span>
+
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">write</span>(<span class="kw">self</span>, record: LogRecord) -> <span class="tp">None</span>:
+        <span class="cm">"""Deliver record to some destination."""</span>
+        ...</code></pre>
+      <p>Any backend that already speaks this shape natively needs nothing else:</p>
+      <pre><code><span class="kw">class</span> <span class="fn">ConsoleLogSink</span>(LogSink):
+    <span class="kw">def</span> <span class="fn">write</span>(<span class="kw">self</span>, record: LogRecord) -> <span class="tp">None</span>:
+        <span class="fn">print</span>(<span class="st">f"[console] {record.level} {record.service}: {record.message}"</span>)</code></pre>
+
+      <h3>Step 3 — wrap each vendor class so it also speaks LogSink</h3>
+      <div class="term">
+        <span class="word">Adaptee</span> — the existing class with the incompatible interface that you can't or
+        don't want to change. <span class="ex">Example: <code>DatadogClient</code> and <code>LegacySyslog</code>
+        are adaptees — they already work, they're just shaped wrong for our code to call directly.</span>
+      </div>
+      <div class="term">
+        <span class="word">Adapter</span> — a class that implements the target interface by holding an adaptee and
+        translating each call into the adaptee's own method calls. <span class="ex">Example:
+        <code>DatadogSinkAdapter</code> below implements <code>LogSink.write</code> by translating a
+        <code>LogRecord</code> into the exact keyword arguments <code>DatadogClient.send_event</code> expects.</span>
+      </div>
+      <div class="term">
+        <span class="word">Composition over inheritance</span> — building behavior by holding a reference to
+        another object (composition), rather than inheriting from it. <span class="ex">Example:
+        <code>DatadogSinkAdapter</code> doesn't inherit from <code>DatadogClient</code> — it <em>holds one</em>
+        as <code>self._client</code> and calls methods on it.</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="fn">DatadogSinkAdapter</span>(LogSink):
+    <span class="cm">"""Adapts DatadogClient to the LogSink interface."""</span>
+
+    _ALERT_TYPES = {<span class="st">"INFO"</span>: <span class="st">"info"</span>, <span class="st">"ERROR"</span>: <span class="st">"error"</span>}
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, client: DatadogClient) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._client = client
+
+    <span class="kw">def</span> <span class="fn">write</span>(<span class="kw">self</span>, record: LogRecord) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._client.send_event(
+            title=<span class="st">f"{record.service}: {record.level}"</span>,
+            text=record.message,
+            tags=[<span class="st">f"service:{record.service}"</span>, <span class="st">f"level:{record.level.lower()}"</span>],
+            alert_type=<span class="kw">self</span>._ALERT_TYPES.get(record.level, <span class="st">"info"</span>),
+        )
+
+
+<span class="kw">class</span> <span class="fn">SyslogSinkAdapter</span>(LogSink):
+    <span class="cm">"""Adapts LegacySyslog to the LogSink interface."""</span>
+
+    _PRIORITIES = {<span class="st">"INFO"</span>: <span class="hl">6</span>, <span class="st">"ERROR"</span>: <span class="hl">3</span>}
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, syslog: LegacySyslog) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._syslog = syslog
+
+    <span class="kw">def</span> <span class="fn">write</span>(<span class="kw">self</span>, record: LogRecord) -> <span class="tp">None</span>:
+        priority = <span class="kw">self</span>._PRIORITIES.get(record.level, <span class="hl">6</span>)
+        <span class="kw">self</span>._syslog.emit(priority, <span class="st">f"{record.service} {record.message}"</span>)</code></pre>
+      <p><code>DatadogSinkAdapter</code> and <code>SyslogSinkAdapter</code> each hold one adaptee and do one job:
+      turn a <code>LogRecord</code> into whatever call that adaptee actually needs.</p>
+
+      <h3>Step 4 — the calling code only ever sees LogSink</h3>
+      <pre><code><span class="kw">class</span> <span class="fn">OrderService</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, sink: LogSink) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._sink = sink
+
+    <span class="kw">def</span> <span class="fn">place_order</span>(<span class="kw">self</span>, order_id: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._sink.write(LogRecord(<span class="st">"INFO"</span>, <span class="st">f"order {order_id} placed"</span>, <span class="st">"orders"</span>))
+
+
+<span class="cm"># usage — same call, three different sinks</span>
+<span class="kw">for</span> sink <span class="kw">in</span> (ConsoleLogSink(), DatadogSinkAdapter(DatadogClient()), SyslogSinkAdapter(LegacySyslog())):
+    OrderService(sink).place_order(<span class="st">"A-1001"</span>)</code></pre>
+      <pre><code>[console] INFO orders: order A-1001 placed
+[datadog] INFO | orders: INFO | order A-1001 placed | tags=['service:orders', 'level:info']
+[syslog] &lt;6&gt; orders order A-1001 placed</code></pre>
+      <p><code>OrderService.place_order</code> never mentions <code>DatadogClient</code>, <code>send_event</code>,
+      <code>LegacySyslog</code>, or <code>emit</code>. It calls <code>self._sink.write(...)</code> exactly once,
+      and each adapter handles its own vendor's translation. Add Kafka next quarter, and it's one new adapter
+      class — <code>OrderService</code> stays untouched.</p>
+    </section>
+
+    <!-- Checkpoint 1 -->
+    <section>
+      <div class="quiz" data-correct="c">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Your team adds Kafka as a third logging backend. With the design above, what has to change?</div>
+        <div class="options">
+          <button class="option" data-id="a">Edit <code>OrderService.place_order</code> to add a branch for Kafka.</button>
+          <button class="option" data-id="b">Edit <code>LogSink</code> to add a <code>write_kafka</code> method.</button>
+          <button class="option" data-id="c">Write one new class, <code>KafkaSinkAdapter</code>, implementing <code>write</code> by translating a <code>LogRecord</code> into whatever the Kafka producer client needs. Nothing else changes.</button>
+          <button class="option" data-id="d">Edit <code>DatadogSinkAdapter</code> to also forward events to Kafka.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite. <code>place_order</code> only calls <code>self._sink.write(...)</code> — it has no backend branches to add. If you find yourself editing it for a new backend, the design has slid back toward <code>BadOrderService</code>.</div>
+        <div class="explain" data-for="b">Not quite. <code>LogSink</code> defines one shared method, <code>write</code>, that every adapter implements in its own way. A backend-specific method name on the interface would force <code>ConsoleLogSink</code>, <code>DatadogSinkAdapter</code>, and <code>SyslogSinkAdapter</code> to all implement a method they don't need.</div>
+        <div class="explain" data-for="c">Correct. That's the entire point of the target interface: any class that implements <code>write(record) -> None</code> can be handed to <code>OrderService</code> unchanged. <code>KafkaSinkAdapter</code> holds a Kafka producer as its adaptee and does the translation, same as <code>DatadogSinkAdapter</code> does for <code>DatadogClient</code>.</div>
+        <div class="explain" data-for="d">Not quite. <code>DatadogSinkAdapter</code>'s whole job is adapting <code>DatadogClient</code> to <code>LogSink</code> — stuffing Kafka logic into it would make one adapter respons­ible for two unrelated vendors. A new adaptee always gets its own adapter class.</div>
+      </div>
+    </section>
+
+    <!-- ================= 4. DIAGRAM ================= -->
+    <section id="s-diagram">
+      <p class="eyebrow">4 · The shape of it</p>
+      <h2>One interface, two adapters, two vendor classes underneath</h2>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 460" width="100%" style="max-width:700px; display:block; margin:0 auto;" role="img" aria-label="UML-style diagram: OrderService holds a LogSink interface; ConsoleLogSink, DatadogSinkAdapter and SyslogSinkAdapter implement it; DatadogSinkAdapter holds a DatadogClient and SyslogSinkAdapter holds a LegacySyslog, both vendor classes outside our code">
+          <!-- OrderService box -->
+          <rect class="uml-box ctx" x="270" y="20" width="180" height="70" rx="6"></rect>
+          <text class="uml-stereotype" x="360" y="40" text-anchor="middle">client</text>
+          <text class="uml-title" x="360" y="60" text-anchor="middle">OrderService</text>
+          <text class="uml-text" x="360" y="80" text-anchor="middle">- _sink</text>
+
+          <!-- Interface box -->
+          <rect class="uml-box iface" x="245" y="150" width="230" height="70" rx="6"></rect>
+          <text class="uml-stereotype" x="360" y="170" text-anchor="middle">target interface</text>
+          <text class="uml-title" x="360" y="190" text-anchor="middle">LogSink</text>
+          <text class="uml-text" x="360" y="210" text-anchor="middle">+ write(record): None</text>
+
+          <!-- composition line: OrderService -> Interface -->
+          <line class="uml-line" x1="360" y1="90" x2="360" y2="150"></line>
+          <polygon class="uml-diamond" points="360,90 353,101 367,101"></polygon>
+
+          <!-- Concrete adapters / sinks -->
+          <rect class="uml-box" x="30" y="270" width="170" height="60" rx="6"></rect>
+          <text class="uml-title" x="115" y="295" text-anchor="middle">ConsoleLogSink</text>
+          <text class="uml-text" x="115" y="315" text-anchor="middle">+ write(record)</text>
+
+          <rect class="uml-box" x="275" y="270" width="180" height="60" rx="6"></rect>
+          <text class="uml-stereotype" x="365" y="288" text-anchor="middle">adapter</text>
+          <text class="uml-title" x="365" y="305" text-anchor="middle">DatadogSinkAdapter</text>
+          <text class="uml-text" x="365" y="322" text-anchor="middle">- _client; + write(record)</text>
+
+          <rect class="uml-box" x="520" y="270" width="170" height="60" rx="6"></rect>
+          <text class="uml-stereotype" x="605" y="288" text-anchor="middle">adapter</text>
+          <text class="uml-title" x="605" y="305" text-anchor="middle">SyslogSinkAdapter</text>
+          <text class="uml-text" x="605" y="322" text-anchor="middle">- _syslog; + write(record)</text>
+
+          <!-- realization (dashed) lines from each concrete class up to the interface -->
+          <path class="uml-line dashed" d="M115,270 L115,240 L360,240 L360,220"></path>
+          <polygon class="uml-arrow" points="360,220 354,232 366,232"></polygon>
+
+          <path class="uml-line dashed" d="M365,270 L365,220"></path>
+          <polygon class="uml-arrow" points="365,220 359,232 371,232"></polygon>
+
+          <path class="uml-line dashed" d="M605,270 L605,240 L360,240 L360,220"></path>
+          <polygon class="uml-arrow" points="360,220 354,232 366,232"></polygon>
+
+          <!-- Adaptee boxes -->
+          <rect class="uml-box vendor" x="275" y="380" width="180" height="60" rx="6"></rect>
+          <text class="uml-stereotype" x="365" y="398" text-anchor="middle">adaptee — vendor SDK</text>
+          <text class="uml-title" x="365" y="418" text-anchor="middle">DatadogClient</text>
+          <text class="uml-text" x="365" y="435" text-anchor="middle">+ send_event(...)</text>
+
+          <rect class="uml-box vendor" x="520" y="380" width="180" height="60" rx="6"></rect>
+          <text class="uml-stereotype" x="610" y="398" text-anchor="middle">adaptee — legacy lib</text>
+          <text class="uml-title" x="610" y="418" text-anchor="middle">LegacySyslog</text>
+          <text class="uml-text" x="610" y="435" text-anchor="middle">+ emit(priority, line)</text>
+
+          <!-- holds: adapter -> adaptee -->
+          <line class="uml-line holds" x1="365" y1="330" x2="365" y2="380"></line>
+          <polygon class="uml-arrow" style="fill:var(--gold)" points="365,380 359,368 371,368"></polygon>
+          <text class="uml-label" x="380" y="358" text-anchor="start">holds</text>
+
+          <line class="uml-line holds" x1="605" y1="330" x2="610" y2="380"></line>
+          <polygon class="uml-arrow" style="fill:var(--gold)" points="610,380 604,368 616,368"></polygon>
+          <text class="uml-label" x="622" y="358" text-anchor="start">holds</text>
+        </svg>
+        <p style="text-align:center; color:var(--text-dim); font-size:0.85rem; margin:0.6em 0 0 0;">
+          Dashed line + arrow = <em>implements the interface</em>. Solid gold line = <em>holds a reference to</em>
+          (composition). The dashed-border boxes are vendor code we don't own — only the adapters ever touch them.
+        </p>
+      </div>
+      <p><code>OrderService</code> only ever points at <code>LogSink</code>. <code>DatadogSinkAdapter</code> is
+      the one place in the codebase that knows <code>DatadogClient.send_event</code> exists — that knowledge
+      never leaks any further than the adapter that holds it.</p>
+    </section>
+
+    <!-- Checkpoint 2 -->
+    <section>
+      <div class="quiz" data-correct="b">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Why does <code>DatadogSinkAdapter</code> hold a <code>DatadogClient</code> as a field, instead of inheriting from it?</div>
+        <div class="options">
+          <button class="option" data-id="a">Because Python doesn't allow inheriting from a third-party class.</button>
+          <button class="option" data-id="b">Holding it as a field (composition) lets <code>DatadogSinkAdapter</code> implement <code>LogSink</code>'s interface independently, while still delegating the real work to <code>DatadogClient</code> — inheriting from <code>DatadogClient</code> would give it Datadog's methods, not <code>LogSink</code>'s.</button>
+          <button class="option" data-id="c">Because holding a reference is faster at runtime than inheriting.</button>
+          <button class="option" data-id="d">It's arbitrary — inheriting from <code>DatadogClient</code> would work identically here.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite — that's not a Python restriction. You can inherit from most third-party classes. The reason to avoid it here is about what inheriting would actually give you, not a language limitation.</div>
+        <div class="explain" data-for="b">Correct. <code>DatadogSinkAdapter</code> needs to <em>be</em> a <code>LogSink</code> — that's what lets <code>OrderService</code> accept it — while still being able to <em>call</em> <code>DatadogClient</code>'s methods internally. Composition gives you both: inherit from <code>LogSink</code> for the interface, hold a <code>DatadogClient</code> instance for the delegation.</div>
+        <div class="explain" data-for="c">Not quite — there's no meaningful performance difference between the two here. The reason is about which interface the object ends up satisfying, not speed.</div>
+        <div class="explain" data-for="d">Not quite. If <code>DatadogSinkAdapter</code> inherited from <code>DatadogClient</code> instead of <code>LogSink</code>, it would have <code>send_event</code>, not <code>write</code> — <code>OrderService</code> couldn't call it as a <code>LogSink</code> at all.</div>
+      </div>
+    </section>
+
+    <!-- ================= 5. PREDICT THE OUTPUT ================= -->
+    <section id="s-predict">
+      <p class="eyebrow">5 · Predict the output</p>
+      <h2>What does this print?</h2>
+      <p>Recall <code>DatadogSinkAdapter._ALERT_TYPES</code> and <code>SyslogSinkAdapter._PRIORITIES</code> only
+      have entries for <code>"INFO"</code> and <code>"ERROR"</code>, and both use <code>.get(record.level, default)</code>
+      to fall back when a level isn't in the map:</p>
+      <pre><code>records = [
+    LogRecord(<span class="st">"ERROR"</span>, <span class="st">"payment declined"</span>, <span class="st">"billing"</span>),
+    LogRecord(<span class="st">"DEBUG"</span>, <span class="st">"cache warmed"</span>, <span class="st">"billing"</span>),
+]
+
+<span class="kw">for</span> sink <span class="kw">in</span> (DatadogSinkAdapter(DatadogClient()), SyslogSinkAdapter(LegacySyslog())):
+    <span class="kw">for</span> record <span class="kw">in</span> records:
+        sink.write(record)</code></pre>
+      <p>Write down what this prints before opening the answer. Pay attention to what happens for the
+      <code>"DEBUG"</code> record specifically — it's not in either adapter's map.</p>
+      <details class="reveal">
+        <summary>Reveal answer</summary>
+        <div class="reveal-body">
+          <pre><code>[datadog] ERROR | billing: ERROR | payment declined | tags=['service:billing', 'level:error']
+[datadog] INFO | billing: DEBUG | cache warmed | tags=['service:billing', 'level:debug']
+[syslog] &lt;3&gt; billing payment declined
+[syslog] &lt;6&gt; billing cache warmed</code></pre>
+          <p>For <code>"ERROR"</code>, both adapters find a match in their map: Datadog sends
+          <code>alert_type="error"</code>, syslog sends priority <code>3</code>. For <code>"DEBUG"</code>, neither
+          map has an entry, so <code>.get(record.level, default)</code> falls back — Datadog's default is
+          <code>"info"</code>, syslog's is <code>6</code>. Notice the record's own <code>level</code> field still
+          says <code>"DEBUG"</code> in the Datadog title (<code>f"{record.service}: {record.level}"</code>) even
+          though the <code>alert_type</code> sent to Datadog's API silently became <code>"info"</code> — the
+          adapter's fallback affects the vendor call, not the original data.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 6. OTHER DOMAINS ================= -->
+    <section id="s-domains">
+      <p class="eyebrow">6 · Same shape, different domain</p>
+      <h2>This isn't a logging-specific trick</h2>
+      <p>Adapter shows up anywhere your code has a shape it wants to call, and the class you actually need to use
+      wasn't written for that shape. Two more, from unrelated domains:</p>
+      <div class="domain-grid">
+        <div class="card domain-card">
+          <h4>Payments — a legacy bank gateway</h4>
+          <p>A checkout flow wants a clean <code>charge(amount_cents, currency)</code> call. The only integration
+          available for one regional bank is an old gateway library that takes a decimal-string amount and an
+          uppercase currency code, and returns a status dictionary instead of a boolean.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">PaymentProcessor</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">charge</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>, currency: <span class="tp">str</span>) -> <span class="tp">bool</span>: ...
+
+<span class="cm"># adaptee — a library we don't control</span>
+<span class="kw">class</span> <span class="fn">LegacyBankGateway</span>:
+    <span class="kw">def</span> <span class="fn">make_payment</span>(<span class="kw">self</span>, amount: <span class="tp">str</span>, currency_code: <span class="tp">str</span>) -> <span class="tp">dict</span>[<span class="tp">str</span>, <span class="tp">str</span>]:
+        ...  <span class="cm"># returns {"status": "OK", "amount": amount}</span>
+
+<span class="kw">class</span> <span class="fn">LegacyBankGatewayAdapter</span>(PaymentProcessor):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, gateway: LegacyBankGateway) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._gateway = gateway
+
+    <span class="kw">def</span> <span class="fn">charge</span>(<span class="kw">self</span>, amount_cents: <span class="tp">int</span>, currency: <span class="tp">str</span>) -> <span class="tp">bool</span>:
+        amount = <span class="st">f"{amount_cents / 100:.2f}"</span>
+        response = <span class="kw">self</span>._gateway.make_payment(amount, currency.upper())
+        <span class="kw">return</span> response[<span class="st">"status"</span>] == <span class="st">"OK"</span></code></pre>
+          <pre><code><span class="fn">print</span>(LegacyBankGatewayAdapter(LegacyBankGateway()).charge(<span class="hl">1250</span>, <span class="st">"eur"</span>))
+<span class="cm"># [bank] make_payment('12.50', 'EUR')</span>
+<span class="cm"># True</span></code></pre>
+          <p>The checkout code calls <code>charge(1250, "eur")</code> — cents, lowercase currency, expects a
+          <code>bool</code> — and never learns that <code>LegacyBankGateway</code> wants a decimal string, an
+          uppercase code, and hands back a dict.</p>
+        </div>
+        <div class="card domain-card">
+          <h4>RAG pipelines — a one-text-at-a-time encoder</h4>
+          <p>A retrieval pipeline's <code>Embedder</code> interface expects <code>embed(texts) -> list of vectors</code>,
+          batched. A locally-hosted model's client only exposes <code>encode_one(text) -> vector</code>, one text
+          at a time.</p>
+          <pre><code><span class="kw">class</span> <span class="fn">Embedder</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">embed</span>(<span class="kw">self</span>, texts: <span class="tp">list</span>[<span class="tp">str</span>]) -> <span class="tp">list</span>[<span class="tp">list</span>[<span class="tp">float</span>]]: ...
+
+<span class="cm"># adaptee</span>
+<span class="kw">class</span> <span class="fn">LocalEncoder</span>:
+    <span class="kw">def</span> <span class="fn">encode_one</span>(<span class="kw">self</span>, text: <span class="tp">str</span>) -> <span class="tp">list</span>[<span class="tp">float</span>]:
+        ...  <span class="cm"># one vector per call</span>
+
+<span class="kw">class</span> <span class="fn">LocalEncoderAdapter</span>(Embedder):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, encoder: LocalEncoder) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._encoder = encoder
+
+    <span class="kw">def</span> <span class="fn">embed</span>(<span class="kw">self</span>, texts: <span class="tp">list</span>[<span class="tp">str</span>]) -> <span class="tp">list</span>[<span class="tp">list</span>[<span class="tp">float</span>]]:
+        <span class="kw">return</span> [<span class="kw">self</span>._encoder.encode_one(t) <span class="kw">for</span> t <span class="kw">in</span> texts]</code></pre>
+          <p><code>LocalEncoderAdapter.embed</code> absorbs the batch-vs-single-text mismatch by looping — the
+          rest of the pipeline never has to know <code>LocalEncoder</code> can only handle one text at a time.</p>
+        </div>
+      </div>
+
+      <div class="also-note">
+        Three domains, one shape: our code was written against a target interface
+        (<code>LogSink</code>, <code>PaymentProcessor</code>, <code>Embedder</code>), and an adapter
+        (<code>DatadogSinkAdapter</code>, <code>LegacyBankGatewayAdapter</code>, <code>LocalEncoderAdapter</code>)
+        sits between that interface and an adaptee we can't rewrite.
+      </div>
+
+      <h3>You've probably already used this without naming it</h3>
+      <p>Python's <code>io.TextIOWrapper</code> is a built-in adapter. A raw <code>BytesIO</code> stream only
+      gives you bytes:</p>
+      <pre><code>raw = io.BytesIO(<span class="kw">b</span><span class="st">"order A-1001 placed\n"</span>)
+<span class="fn">print</span>(<span class="fn">type</span>(raw.read()))
+<span class="cm"># &lt;class 'bytes'&gt;</span>
+
+raw.seek(<span class="hl">0</span>)
+text = io.TextIOWrapper(raw, encoding=<span class="st">"utf-8"</span>)
+first = text.read()
+<span class="fn">print</span>(<span class="fn">type</span>(first), <span class="fn">repr</span>(first))
+<span class="cm"># &lt;class 'str'&gt; 'order A-1001 placed\n'</span></code></pre>
+      <p><code>TextIOWrapper</code> is exactly a <code>LogSink</code>-style adapter: it holds the raw byte stream
+      as its adaptee, and exposes a text-based <code>read</code>/<code>write</code> interface — the shape most
+      of Python's text-handling code actually expects — by decoding bytes to <code>str</code> on the way through.
+      Code that reads <code>text</code> never touches bytes directly.</p>
+    </section>
+
+    <!-- Checkpoint 3 -->
+    <section>
+      <div class="quiz" data-correct="b">
+        <div class="q-label">Checkpoint</div>
+        <div class="q-prompt">Is <code>io.TextIOWrapper</code> playing the role of Adapter, Target interface, or Adaptee in the example above?</div>
+        <div class="options">
+          <button class="option" data-id="a">Adaptee — it's the thing being wrapped.</button>
+          <button class="option" data-id="b">Adapter — it holds the raw <code>BytesIO</code> stream (the adaptee) and exposes a text-based read/write interface (the target shape) that the rest of the code actually wants to call.</button>
+          <button class="option" data-id="c">Target interface — it defines the abstract contract that other classes implement.</button>
+          <button class="option" data-id="d">None of these — file-like objects predate the Adapter pattern, so the comparison doesn't apply.</button>
+        </div>
+        <div class="verdict"></div>
+        <div class="explain" data-for="a">Not quite — that's <code>BytesIO</code>'s role, not <code>TextIOWrapper</code>'s. <code>BytesIO</code> is the adaptee: the thing with bytes-only behavior that needs wrapping.</div>
+        <div class="explain" data-for="b">Correct. <code>TextIOWrapper(raw, ...)</code> takes a raw byte stream in its constructor — exactly like <code>DatadogSinkAdapter(DatadogClient())</code> takes a <code>DatadogClient</code> — and its own <code>read</code>/<code>write</code> methods translate to and from the adaptee's bytes-only methods.</div>
+        <div class="explain" data-for="c">Not quite. There's no single abstract class here playing that role explicitly — but conceptually, "something with text-based <code>read</code>/<code>write</code>" is the shape being targeted, and <code>TextIOWrapper</code> is what supplies it.</div>
+        <div class="explain" data-for="d">Not quite. A pattern doesn't need to reference the Gang of Four to count — what matters is the shape: does something hold an incompatible object and translate calls into the shape you actually wanted? That's what's happening here, regardless of when the classes were written.</div>
+      </div>
+    </section>
+
+    <!-- ================= 7. SPOT THE BUG ================= -->
+    <section id="s-bug">
+      <p class="eyebrow">7 · Spot the smell</p>
+      <h2>This is called an adapter — but something's wrong</h2>
+      <pre><code><span class="kw">class</span> <span class="fn">LeakyDatadogSinkAdapter</span>(LogSink):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, client: DatadogClient) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._client = client
+
+    <span class="kw">def</span> <span class="fn">write</span>(<span class="kw">self</span>, title: <span class="tp">str</span>, text: <span class="tp">str</span>, tags: <span class="tp">list</span>[<span class="tp">str</span>], alert_type: <span class="tp">str</span>) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._client.send_event(title, text, tags, alert_type)</code></pre>
+      <p><code>LeakyDatadogSinkAdapter</code> inherits from <code>LogSink</code> and holds a
+      <code>DatadogClient</code>, exactly like <code>DatadogSinkAdapter</code> did. Something's still wrong.
+      What happens when <code>OrderService</code> tries to use it?</p>
+      <details class="reveal">
+        <summary>Reveal explanation</summary>
+        <div class="reveal-body">
+          <pre><code>OrderService(LeakyDatadogSinkAdapter(DatadogClient())).place_order(<span class="st">"A-1001"</span>)
+<span class="cm"># TypeError: LeakyDatadogSinkAdapter.write() missing 3 required positional</span>
+<span class="cm"># arguments: 'text', 'tags', and 'alert_type'</span></code></pre>
+          <p>The bug: <code>write</code>'s signature here is <code>write(self, title, text, tags, alert_type)</code>
+          — Datadog's own parameter shape — instead of <code>write(self, record: LogRecord)</code>, the shape
+          <code>LogSink</code> actually declares. <code>OrderService.place_order</code> calls
+          <code>self._sink.write(LogRecord(...))</code> — one positional argument — so this "adapter" crashes with
+          a <code>TypeError</code> the moment it's actually used.</p>
+          <p>This isn't a small typo — it's the adapter failing at its one job. An adapter's whole purpose is to
+          absorb the adaptee's shape internally and expose the target's shape externally. Here, the adaptee's
+          shape leaked straight through the method signature instead of being translated inside the method body.
+          The fix is <code>DatadogSinkAdapter</code>'s original signature: accept one <code>LogRecord</code>, and
+          do the unpacking into <code>title</code>/<code>text</code>/<code>tags</code>/<code>alert_type</code>
+          inside <code>write</code>, not in its parameter list.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= 8. WHEN NOT TO USE ================= -->
+    <section id="s-tradeoffs">
+      <p class="eyebrow">8 · Trade-offs</p>
+      <h2>When not to reach for Adapter</h2>
+      <p>Adapter costs you an extra class and an extra layer of indirection between your code and the thing it's
+      actually calling. That's worth it when the adaptee's shape is genuinely wrong for your code and you can't
+      or shouldn't change it. It's not worth it when you could just change the mismatched code directly.</p>
+      <div class="card">
+        <span class="bad-tag">Over-engineered</span>
+        <pre><code><span class="cm"># a class you wrote yourself, in this same codebase</span>
+<span class="kw">class</span> <span class="fn">ReportBuilder</span>:
+    <span class="kw">def</span> <span class="fn">build_rpt</span>(<span class="kw">self</span>, data: <span class="tp">dict</span>) -> <span class="tp">str</span>:
+        ...
+
+<span class="kw">class</span> <span class="fn">Builder</span>(ABC):
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">build</span>(<span class="kw">self</span>, data: <span class="tp">dict</span>) -> <span class="tp">str</span>: ...
+
+<span class="kw">class</span> <span class="fn">ReportBuilderAdapter</span>(Builder):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, inner: ReportBuilder) -> <span class="tp">None</span>:
+        <span class="kw">self</span>._inner = inner
+
+    <span class="kw">def</span> <span class="fn">build</span>(<span class="kw">self</span>, data: <span class="tp">dict</span>) -> <span class="tp">str</span>:
+        <span class="kw">return</span> <span class="kw">self</span>._inner.build_rpt(data)</code></pre>
+        <p><code>ReportBuilder</code> isn't a vendor SDK or a legacy library outside your control — it's a class
+        in the same codebase, written by your own team. If its method is just misnamed
+        (<code>build_rpt</code> instead of <code>build</code>), the fix is to rename the method, not to wrap it
+        in a permanent adapter. Reach for Adapter when you genuinely can't change the adaptee — it's third-party,
+        generated, or shared with other consumers you'd break — not when a rename would do.</p>
+      </div>
+
+      <h3>Adapter vs. Decorator — easy to mix up</h3>
+      <p>Both wrap an object and hold a reference to it. The difference is <em>why</em> you're wrapping it.</p>
+      <table class="compare">
+        <tr><th></th><th>Adapter</th><th>Decorator</th></tr>
+        <tr><td>Interface of the wrapped object</td><td>Different from what the wrapper exposes — that's the whole reason it exists</td><td>Same as what the wrapper exposes — a <code>LogSink</code> wrapping a <code>LogSink</code></td></tr>
+        <tr><td>Goal</td><td>Make an incompatible class usable at all</td><td>Add behavior (retry, caching, logging) around a class that already fits</td></tr>
+        <tr><td>Example</td><td><code>DatadogSinkAdapter</code> makes <code>DatadogClient</code> usable as a <code>LogSink</code></td><td>A <code>RetryingLogSink(LogSink)</code> that wraps any other <code>LogSink</code> and retries on failure</td></tr>
+      </table>
+      <div class="rule-line">One-line rule: if the wrapped object's interface doesn't match what you need, it's Adapter.
+      If it already matches and you're wrapping it to add behavior around the same interface, it's Decorator.</div>
+    </section>
+
+    <!-- ================= 9. PRACTICE ================= -->
+    <section id="s-practice">
+      <p class="eyebrow">9 · Cheat sheet &amp; practice</p>
+      <h2>Cheat sheet</h2>
+      <div class="cheat">
+        <dl>
+          <dt>Problem it solves</dt>
+          <dd>A class you need to use has an interface that doesn't match what your code expects to call, and you can't or shouldn't change that class.</dd>
+          <dt>Core idea, in one sentence</dt>
+          <dd>Write a class that implements the interface your code expects, holds the incompatible class internally, and translates each call into that class's own method calls.</dd>
+          <dt>Trade-off</dt>
+          <dd>One more class and one more layer of indirection, for a mismatch you could sometimes fix more directly by editing the mismatched code yourself.</dd>
+          <dt>The smell that tells you to reach for it</dt>
+          <dd>Your code needs to call a class whose method names, argument shapes, or return types don't match what the rest of your codebase expects — and that class is third-party, generated, or otherwise off-limits to edit.</dd>
+        </dl>
+      </div>
+
+      <h2 style="margin-top:2rem;">Your turn</h2>
+      <div class="exercise-box">
+        <p><strong>Scenario:</strong> you're building a <code>WeatherService</code> for an app that shows current
+        conditions. Your code was written against a clean internal shape:
+        <code>get_current(lat, lon) -> WeatherReading</code>, where <code>WeatherReading</code> has
+        <code>temperature_celsius</code>, <code>humidity_percent</code>, and <code>description</code> fields. The
+        only weather data source available is a third-party SDK, <code>LegacyMetClient</code>, whose one method is
+        <code>fetch(latitude: float, longitude: float) -> dict</code>, returning a dictionary shaped like
+        <code>{"temp_f": 71.6, "rh": 0.42, "summary": "clear"}</code> — Fahrenheit, humidity as a 0–1 fraction, and
+        a different key name for the description.</p>
+        <p><strong>Task:</strong> apply Adapter to this. Name the target interface and the method it requires.
+        Name the adaptee. Name the adapter class, and describe exactly what conversions it has to perform inside
+        its one method — the temperature scale, the humidity representation, and the field renaming — so that the
+        rest of <code>WeatherService</code> never has to know <code>LegacyMetClient</code> exists. You don't need
+        to write the implementation — just describe it clearly enough that you could code it from your own
+        description.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  Adapter pattern lesson · built for system design / SWE interview prep.
+</footer>
+
+<script>
+(function(){
+  // ---------- Section registry for nav ----------
+  var sections = [
+    {id:'s-hero', label:'Start'},
+    {id:'s-problem', label:'The problem'},
+    {id:'s-bad', label:'Naive version'},
+    {id:'s-transform', label:'Building the fix'},
+    {id:'s-diagram', label:'Class diagram'},
+    {id:'s-predict', label:'Predict output'},
+    {id:'s-domains', label:'Other domains'},
+    {id:'s-bug', label:'Spot the smell'},
+    {id:'s-tradeoffs', label:'Trade-offs'},
+    {id:'s-practice', label:'Cheat sheet'}
+  ];
+
+  var railList = document.getElementById('railList');
+  var topnav = document.getElementById('topnav');
+
+  sections.forEach(function(s, i){
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.dataset.target = s.id;
+    var n = document.createElement('span');
+    n.className = 'n';
+    n.textContent = String(i + 1).padStart(2, '0');
+    a.appendChild(n);
+    a.appendChild(document.createTextNode(s.label));
+    li.appendChild(a);
+    railList.appendChild(li);
+
+    var ta = document.createElement('a');
+    ta.href = '#' + s.id;
+    ta.dataset.target = s.id;
+    ta.textContent = s.label;
+    topnav.appendChild(ta);
+  });
+
+  var allNavLinks = document.querySelectorAll('.rail a, .topnav a');
+
+  function setActive(id){
+    allNavLinks.forEach(function(a){
+      if (a.dataset.target === id) a.classList.add('active');
+      else a.classList.remove('active');
+    });
+  }
+
+  if ('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      var visible = entries.filter(function(e){ return e.isIntersecting; });
+      if (visible.length > 0){
+        visible.sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+        setActive(visible[0].target.id);
+      }
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(function(s){
+      var el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  }
+
+  // ---------- Hero backend switcher ----------
+  var swStrategy = document.getElementById('swStrategy');
+  var swNote = document.getElementById('swNote');
+  document.querySelectorAll('.provider-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.provider-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      swStrategy.textContent = btn.dataset.line;
+      swNote.innerHTML = btn.dataset.desc.replace(/`([^`]+)`/g, '<code>$1</code>');
+    });
+  });
+
+  // ---------- Quiz logic ----------
+  document.querySelectorAll('.quiz').forEach(function(quiz){
+    var correctId = quiz.dataset.correct;
+    var verdictEl = quiz.querySelector('.verdict');
+
+    quiz.querySelectorAll('.option').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (quiz.dataset.answered === 'true') return;
+        quiz.dataset.answered = 'true';
+
+        quiz.querySelectorAll('.option').forEach(function(b){
+          b.disabled = true;
+          if (b.dataset.id === correctId) b.classList.add('is-correct');
+        });
+        if (btn.dataset.id !== correctId) btn.classList.add('is-incorrect');
+
+        quiz.querySelectorAll('.explain').forEach(function(e){ e.style.display = 'none'; });
+        var explanation = quiz.querySelector('.explain[data-for="' + btn.dataset.id + '"]');
+        if (explanation) explanation.style.display = 'block';
+
+        verdictEl.textContent = (btn.dataset.id === correctId) ? 'Correct.' : 'Not quite.';
+        verdictEl.className = 'verdict ' + ((btn.dataset.id === correctId) ? 'good' : 'bad');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
